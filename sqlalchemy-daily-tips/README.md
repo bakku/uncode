@@ -22,11 +22,11 @@ Edit `tips.json` to add or update lessons. Each entry includes a title, explanat
 
 ## Local Testing
 
-Install dependencies and run the script with environment variables set:
+Install uv (https://astral.sh/uv), then install dependencies and run the script with environment variables set:
 
 ```bash
 cd sqlalchemy-daily-tips
-python -m pip install -r requirements.txt
+uv pip install -r requirements.txt
 export TELEGRAM_BOT_TOKEN=your-token
 export TELEGRAM_CHAT_ID=your-chat-id
 python send_tip.py
