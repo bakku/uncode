@@ -1,0 +1,152 @@
+[
+  {
+    "title": "Creating an Engine",
+    "explanation": "The engine is SQLAlchemy's starting point and represents the core connection pool. It knows how to talk to your database and manage connections. Setting echo=True logs all SQL so you can learn what SQLAlchemy is emitting.",
+    "code": "from sqlalchemy import create_engine\n\nengine = create_engine(\"sqlite:///demo.db\", echo=True)\nprint(engine)"
+  },
+  {
+    "title": "Connecting and Running Raw SQL",
+    "explanation": "You can execute raw SQL with an engine connection when you need full control. Use text() to safely wrap literal SQL and then call execute(). Always close connections or use a context manager.",
+    "code": "from sqlalchemy import create_engine, text\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith engine.connect() as conn:\n    result = conn.execute(text(\"SELECT 1 AS answer\"))\n    print(result.scalar_one())"
+  },
+  {
+    "title": "Committing Transactions",
+    "explanation": "SQLAlchemy starts a transaction automatically when you first execute a statement. For write operations, you must commit or the changes are rolled back. The engine.begin() context manager commits on success and rolls back on errors.",
+    "code": "from sqlalchemy import create_engine, text\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith engine.begin() as conn:\n    conn.execute(text(\"CREATE TABLE IF NOT EXISTS notes (id INTEGER)\"))"
+  },
+  {
+    "title": "Defining Tables with MetaData",
+    "explanation": "MetaData is a registry that stores table definitions. Table objects describe columns, types, and constraints, and can be used with SQLAlchemy Core or the ORM. Define them once and reuse everywhere.",
+    "code": "from sqlalchemy import Column, Integer, MetaData, String, Table\n\nmetadata = MetaData()\nusers = Table(\n    \"users\",\n    metadata,\n    Column(\"id\", Integer, primary_key=True),\n    Column(\"name\", String(50), nullable=False),\n)"
+  },
+  {
+    "title": "Creating Tables with create_all",
+    "explanation": "Once tables are defined in MetaData, call create_all(engine) to create them. The operation is idempotent: existing tables are left alone, so it's safe to run on startup.",
+    "code": "from sqlalchemy import create_engine\n\nfrom sqlalchemy import Column, Integer, MetaData, String, Table\n\nengine = create_engine(\"sqlite:///demo.db\")\nmetadata = MetaData()\nTable(\n    \"users\",\n    metadata,\n    Column(\"id\", Integer, primary_key=True),\n    Column(\"name\", String(50), nullable=False),\n)\nmetadata.create_all(engine)"
+  },
+  {
+    "title": "The Declarative Base (ORM)",
+    "explanation": "The ORM uses a declarative base class to map Python classes to tables. You define __tablename__ and mapped columns, and SQLAlchemy handles the rest. This style is often more readable than Table objects alone.",
+    "code": "from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]"
+  },
+  {
+    "title": "Column Types and Nullability",
+    "explanation": "Choose column types that match your data and use nullable to enforce required fields. For example, String(50) limits text length while DateTime stores timestamps. Defaults can be Python callables or fixed values.",
+    "code": "from datetime import datetime\nfrom sqlalchemy import DateTime, Integer, String\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Task(Base):\n    __tablename__ = \"tasks\"\n    id: Mapped[int] = mapped_column(Integer, primary_key=True)\n    title: Mapped[str] = mapped_column(String(50), nullable=False)\n    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)"
+  },
+  {
+    "title": "Sessions: The Unit of Work",
+    "explanation": "A Session tracks changes to ORM objects and issues SQL when you commit. Add objects, commit, and close the session to release resources. Treat each session as a short-lived unit of work.",
+    "code": "from sqlalchemy import create_engine\nfrom sqlalchemy.orm import Session\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    session.add_all([])\n    session.commit()"
+  },
+  {
+    "title": "The sessionmaker Pattern",
+    "explanation": "sessionmaker builds a reusable factory for sessions so you don't have to pass engine everywhere. You can also preconfigure options like expire_on_commit. This is common in applications with many data access points.",
+    "code": "from sqlalchemy import create_engine\nfrom sqlalchemy.orm import sessionmaker\n\nengine = create_engine(\"sqlite:///demo.db\")\nSessionLocal = sessionmaker(bind=engine, expire_on_commit=False)\n\nwith SessionLocal() as session:\n    session.commit()"
+  },
+  {
+    "title": "Inserting Records",
+    "explanation": "Use session.add() for a single object or session.add_all() for a list. Flushing sends SQL to the database without committing, while commit persists the transaction. SQLAlchemy will populate primary keys after flush or commit.",
+    "code": "from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\nfrom sqlalchemy import create_engine\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]\n\nengine = create_engine(\"sqlite:///demo.db\")\nBase.metadata.create_all(engine)\nwith Session(engine) as session:\n    session.add_all([User(name=\"Ada\"), User(name=\"Linus\")])\n    session.commit()"
+  },
+  {
+    "title": "Querying with select()",
+    "explanation": "SQLAlchemy 2.0 uses select() statements for ORM queries. Use session.scalars() to fetch mapped objects and then call .all(), .first(), or .one(). The select() API is composable and type-friendly.",
+    "code": "from sqlalchemy import create_engine, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    stmt = select(User)\n    users = session.scalars(stmt).all()\n    print(users)"
+  },
+  {
+    "title": "Filtering with where()",
+    "explanation": "Use where() to filter results by column criteria. You can chain multiple where() calls or combine expressions with and_/or_. This keeps your queries explicit and readable.",
+    "code": "from sqlalchemy import create_engine, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    stmt = select(User).where(User.name == \"Ada\")\n    user = session.scalars(stmt).first()\n    print(user)"
+  },
+  {
+    "title": "Ordering and Limiting",
+    "explanation": "order_by() controls sort order and can take asc/desc expressions. limit() and offset() are handy for pagination. Combine them to fetch a predictable window of rows.",
+    "code": "from sqlalchemy import create_engine, desc, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    stmt = select(User).order_by(desc(User.id)).limit(5).offset(10)\n    print(session.scalars(stmt).all())"
+  },
+  {
+    "title": "Updating Records",
+    "explanation": "Load an object, mutate its attributes, and commit to persist changes. SQLAlchemy tracks the changes automatically. For bulk updates, you can use update() statements with session.execute().",
+    "code": "from sqlalchemy import create_engine, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    user = session.scalars(select(User).limit(1)).first()\n    if user:\n        user.name = user.name.upper()\n        session.commit()"
+  },
+  {
+    "title": "Deleting Records",
+    "explanation": "Use session.delete() to remove a specific ORM object and commit the transaction. SQLAlchemy will issue a DELETE for that row. Bulk deletes are also possible with delete() statements.",
+    "code": "from sqlalchemy import create_engine, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    user = session.scalars(select(User).limit(1)).first()\n    if user:\n        session.delete(user)\n        session.commit()"
+  },
+  {
+    "title": "One-to-Many Relationships",
+    "explanation": "Use relationship() with ForeignKey to model one-to-many data. back_populates keeps both sides in sync. Accessing parent.children gives you a list of related objects.",
+    "code": "from sqlalchemy import ForeignKey\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Parent(Base):\n    __tablename__ = \"parents\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    children: Mapped[list[\"Child\"]] = relationship(back_populates=\"parent\")\n\nclass Child(Base):\n    __tablename__ = \"children\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    parent_id: Mapped[int] = mapped_column(ForeignKey(\"parents.id\"))\n    parent: Mapped[Parent] = relationship(back_populates=\"children\")"
+  },
+  {
+    "title": "Many-to-Many Relationships",
+    "explanation": "Many-to-many relationships use an association table with two foreign keys. Pass the association table to relationship() via the secondary argument. SQLAlchemy handles inserts into the join table automatically.",
+    "code": "from sqlalchemy import Column, ForeignKey, Integer, Table\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship\n\nclass Base(DeclarativeBase):\n    pass\n\nassociation = Table(\n    \"team_members\",\n    Base.metadata,\n    Column(\"team_id\", ForeignKey(\"teams.id\"), primary_key=True),\n    Column(\"user_id\", ForeignKey(\"users.id\"), primary_key=True),\n)\n\nclass Team(Base):\n    __tablename__ = \"teams\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    users: Mapped[list[\"User\"]] = relationship(secondary=association, back_populates=\"teams\")\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    teams: Mapped[list[Team]] = relationship(secondary=association, back_populates=\"users\")"
+  },
+  {
+    "title": "Eager Loading with joinedload",
+    "explanation": "joinedload() performs a SQL join to load related objects in the same query. It is great for one-to-many or many-to-one relationships when you know you'll need the related data right away.",
+    "code": "from sqlalchemy import ForeignKey, create_engine, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, joinedload, mapped_column, relationship\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Parent(Base):\n    __tablename__ = \"parents\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    children: Mapped[list[\"Child\"]] = relationship()\n\nclass Child(Base):\n    __tablename__ = \"children\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    parent_id: Mapped[int] = mapped_column(ForeignKey(\"parents.id\"))\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    stmt = select(Parent).options(joinedload(Parent.children))\n    print(session.scalars(stmt).all())"
+  },
+  {
+    "title": "Eager Loading with selectinload",
+    "explanation": "selectinload() fetches related objects in a separate IN query, which can be more efficient for larger collections. It avoids row duplication that comes with joins while still preventing N+1 queries.",
+    "code": "from sqlalchemy import ForeignKey, create_engine, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, selectinload\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Parent(Base):\n    __tablename__ = \"parents\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    children: Mapped[list[\"Child\"]] = relationship()\n\nclass Child(Base):\n    __tablename__ = \"children\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    parent_id: Mapped[int] = mapped_column(ForeignKey(\"parents.id\"))\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    stmt = select(Parent).options(selectinload(Parent.children))\n    print(session.scalars(stmt).all())"
+  },
+  {
+    "title": "Lazy Loading and the N+1 Problem",
+    "explanation": "By default, relationships load lazily, triggering a new query each time you access related data. That can cause the N+1 problem in loops. Use eager loading or echo=True to spot excessive queries.",
+    "code": "from sqlalchemy import ForeignKey, create_engine, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Parent(Base):\n    __tablename__ = \"parents\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    children: Mapped[list[\"Child\"]] = relationship()\n\nclass Child(Base):\n    __tablename__ = \"children\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    parent_id: Mapped[int] = mapped_column(ForeignKey(\"parents.id\"))\n\nengine = create_engine(\"sqlite:///demo.db\", echo=True)\nwith Session(engine) as session:\n    parents = session.scalars(select(Parent)).all()\n    for parent in parents:\n        print(parent.children)"
+  },
+  {
+    "title": "Hybrid Properties",
+    "explanation": "@hybrid_property lets you define attributes that work both in Python and in SQL expressions. They are ideal for computed fields like full names or totals that you want to query and access.",
+    "code": "from sqlalchemy.ext.hybrid import hybrid_property\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Person(Base):\n    __tablename__ = \"people\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    first_name: Mapped[str]\n    last_name: Mapped[str]\n\n    @hybrid_property\n    def full_name(self) -> str:\n        return f\"{self.first_name} {self.last_name}\""
+  },
+  {
+    "title": "Column Defaults and server_default",
+    "explanation": "Defaults can be applied in Python with default= or in the database with server_default=. Use server_default when you want the database itself to guarantee the value, such as timestamps or UUIDs.",
+    "code": "from datetime import datetime\nfrom sqlalchemy import DateTime, func\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Event(Base):\n    __tablename__ = \"events\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())"
+  },
+  {
+    "title": "Events and Listeners",
+    "explanation": "Events let you hook into ORM lifecycle moments like before_insert or before_update. They are useful for validation, auditing, or automatically setting fields.",
+    "code": "from sqlalchemy import event\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]\n\n@event.listens_for(User, \"before_insert\")\ndef normalize_name(mapper, connection, target) -> None:\n    target.name = target.name.strip()"
+  },
+  {
+    "title": "Cascades",
+    "explanation": "Cascade options define how related objects behave when the parent changes. cascade=\"all, delete-orphan\" means child rows are saved, updated, and removed with the parent, keeping data consistent.",
+    "code": "from sqlalchemy import ForeignKey\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Folder(Base):\n    __tablename__ = \"folders\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    files: Mapped[list[\"File\"]] = relationship(\n        back_populates=\"folder\", cascade=\"all, delete-orphan\"\n    )\n\nclass File(Base):\n    __tablename__ = \"files\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    folder_id: Mapped[int] = mapped_column(ForeignKey(\"folders.id\"))\n    folder: Mapped[Folder] = relationship(back_populates=\"files\")"
+  },
+  {
+    "title": "Using func for Aggregations",
+    "explanation": "The func namespace exposes SQL functions like count, sum, and avg. Combine them with group_by to compute metrics across rows. Aggregations are great for reporting queries.",
+    "code": "from sqlalchemy import create_engine, func, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass Order(Base):\n    __tablename__ = \"orders\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    total: Mapped[float]\n\nengine = create_engine(\"sqlite:///demo.db\")\nwith Session(engine) as session:\n    stmt = select(func.count(Order.id), func.sum(Order.total))\n    print(session.execute(stmt).one())"
+  },
+  {
+    "title": "Subqueries and CTEs",
+    "explanation": "Subqueries and common table expressions (CTEs) help break down complex queries. Use .subquery() for inline subqueries or .cte() for named, reusable query blocks.",
+    "code": "from sqlalchemy import create_engine, select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    active: Mapped[bool]\n\nengine = create_engine(\"sqlite:///demo.db\")\nactive_users = select(User.id).where(User.active).cte(\"active_users\")\nwith Session(engine) as session:\n    stmt = select(active_users.c.id)\n    print(session.execute(stmt).all())"
+  },
+  {
+    "title": "The Repository Pattern",
+    "explanation": "A repository wraps session logic in a small class so your application code stays clean. It also makes testing easier by centralizing data access. Keep repositories focused on a single aggregate or entity.",
+    "code": "from sqlalchemy import select\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column\n\nclass Base(DeclarativeBase):\n    pass\n\nclass User(Base):\n    __tablename__ = \"users\"\n    id: Mapped[int] = mapped_column(primary_key=True)\n    name: Mapped[str]\n\nclass UserRepository:\n    def get_by_id(self, session: Session, user_id: int) -> User | None:\n        stmt = select(User).where(User.id == user_id)\n        return session.scalars(stmt).first()"
+  },
+  {
+    "title": "Alembic Basics",
+    "explanation": "Alembic manages schema migrations. Initialize once with alembic init, create revisions, and apply them to your database. You can also drive Alembic via Python for automation.",
+    "code": "from alembic import command\nfrom alembic.config import Config\n\nconfig = Config(\"alembic.ini\")\ncommand.revision(config, message=\"add users\", autogenerate=True)\ncommand.upgrade(config, \"head\")"
+  },
+  {
+    "title": "Async SQLAlchemy",
+    "explanation": "Use create_async_engine and AsyncSession when your application is async-first. Async sessions use await for database I/O and keep your event loop responsive. It is ideal for async web frameworks.",
+    "code": "import asyncio\nfrom sqlalchemy.ext.asyncio import AsyncSession, create_async_engine\n\nengine = create_async_engine(\"sqlite+aiosqlite:///demo.db\")\n\nasync def main() -> None:\n    async with AsyncSession(engine) as session:\n        await session.commit()\n\nasyncio.run(main())"
+  },
+  {
+    "title": "Best Practices Recap",
+    "explanation": "Keep sessions short-lived, rely on connection pooling, and only enable echo in development. Use type annotations for clarity and always close sessions. These habits make SQLAlchemy code easier to maintain.",
+    "code": "from sqlalchemy import create_engine\nfrom sqlalchemy.orm import Session\n\nengine = create_engine(\"sqlite:///demo.db\", echo=False, pool_pre_ping=True)\nwith Session(engine) as session:\n    session.commit()"
+  }
+]
