@@ -1,5 +1,3 @@
-import json
-
 from price_monitor.scrapers.oberpfalz_beef import OberpfalzBeefLammScraper
 
 

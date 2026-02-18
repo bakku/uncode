@@ -38,17 +38,17 @@ def main() -> None:
         diff = store.compare(scraper.name, products)
 
         if diff.changes or diff.new_products or diff.removed_product_ids:
-            print(f"  Changes detected!")
+            print("  Changes detected!")
             if notifier:
                 try:
                     notifier.notify(diff)
-                    print(f"  Telegram notification sent.")
+                    print("  Telegram notification sent.")
                 except Exception as e:
                     print(
                         f"  Error sending notification: {e}",
                         file=sys.stderr,
                     )
         else:
-            print(f"  No changes.")
+            print("  No changes.")
 
         store.update(scraper.name, products)

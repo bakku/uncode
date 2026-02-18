@@ -5,9 +5,7 @@ import httpx
 
 from price_monitor.models import Product
 
-_DATA_LAYER_PATTERN = re.compile(
-    r"onEventDataLayer\s*=\s*JSON\.parse\('(.+?)'\)"
-)
+_DATA_LAYER_PATTERN = re.compile(r"onEventDataLayer\s*=\s*JSON\.parse\('(.+?)'\)")
 
 
 class OberpfalzBeefLammScraper:
@@ -27,9 +25,7 @@ class OberpfalzBeefLammScraper:
     def _parse(self, html: str) -> list[Product]:
         match = _DATA_LAYER_PATTERN.search(html)
         if not match:
-            raise ValueError(
-                f"Could not find dataLayer JSON on {self.url}"
-            )
+            raise ValueError(f"Could not find dataLayer JSON on {self.url}")
 
         raw = match.group(1).replace("\\/", "/")
         data = json.loads(raw)

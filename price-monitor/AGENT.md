@@ -9,3 +9,9 @@
 - After each completed task, run the `ty` type checker via `uv`:
   - `uv run ty check`
 - A task is only complete after this type check passes.
+
+## Linting & formatting requirement
+- After each completed task, run ruff via `uv`:
+  - `uv run ruff check .`
+  - `uv run ruff format .`
+- A task is only complete after ruff passes without errors.

@@ -45,9 +45,7 @@ class PriceStore:
             json.dump(data, f, indent=2, ensure_ascii=False)
             f.write("\n")
 
-    def compare(
-        self, shop_name: str, current_products: list[Product]
-    ) -> PriceDiff:
+    def compare(self, shop_name: str, current_products: list[Product]) -> PriceDiff:
         data = self.load()
         shop_entry = data.get(shop_name)
         old_products: dict[str, object] = {}
@@ -77,9 +75,7 @@ class PriceStore:
                         )
                     )
 
-        removed = [
-            pid for pid in old_products if pid not in current_map
-        ]
+        removed = [pid for pid in old_products if pid not in current_map]
 
         return PriceDiff(
             shop_name=shop_name,
@@ -91,10 +87,7 @@ class PriceStore:
     def update(self, shop_name: str, products: list[Product]) -> None:
         data = self.load()
         data[shop_name] = {
-            "products": {
-                p.id: {"name": p.name, "price": p.price}
-                for p in products
-            },
+            "products": {p.id: {"name": p.name, "price": p.price} for p in products},
             "last_checked": datetime.now(UTC).isoformat(),
         }
         self.save(data)

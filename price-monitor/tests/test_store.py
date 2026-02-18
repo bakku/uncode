@@ -20,15 +20,19 @@ class TestPriceStore:
 
     def test_compare_detects_price_change(self, tmp_path: Path) -> None:
         path = tmp_path / "prices.json"
-        path.write_text(json.dumps({
-            "shop1": {
-                "products": {
-                    "1": {"name": "Item A", "price": 10.0},
-                    "2": {"name": "Item B", "price": 20.0},
-                },
-                "last_checked": "2026-01-01T00:00:00Z",
-            }
-        }))
+        path.write_text(
+            json.dumps(
+                {
+                    "shop1": {
+                        "products": {
+                            "1": {"name": "Item A", "price": 10.0},
+                            "2": {"name": "Item B", "price": 20.0},
+                        },
+                        "last_checked": "2026-01-01T00:00:00Z",
+                    }
+                }
+            )
+        )
         store = PriceStore(path)
         products = [
             Product(id="1", name="Item A", price=8.0),
@@ -44,15 +48,19 @@ class TestPriceStore:
 
     def test_compare_detects_removed_products(self, tmp_path: Path) -> None:
         path = tmp_path / "prices.json"
-        path.write_text(json.dumps({
-            "shop1": {
-                "products": {
-                    "1": {"name": "Item A", "price": 10.0},
-                    "2": {"name": "Item B", "price": 20.0},
-                },
-                "last_checked": "2026-01-01T00:00:00Z",
-            }
-        }))
+        path.write_text(
+            json.dumps(
+                {
+                    "shop1": {
+                        "products": {
+                            "1": {"name": "Item A", "price": 10.0},
+                            "2": {"name": "Item B", "price": 20.0},
+                        },
+                        "last_checked": "2026-01-01T00:00:00Z",
+                    }
+                }
+            )
+        )
         store = PriceStore(path)
         products = [Product(id="1", name="Item A", price=10.0)]
         diff = store.compare("shop1", products)
@@ -75,14 +83,18 @@ class TestPriceStore:
 
     def test_compare_no_changes(self, tmp_path: Path) -> None:
         path = tmp_path / "prices.json"
-        path.write_text(json.dumps({
-            "shop1": {
-                "products": {
-                    "1": {"name": "Item A", "price": 10.0},
-                },
-                "last_checked": "2026-01-01T00:00:00Z",
-            }
-        }))
+        path.write_text(
+            json.dumps(
+                {
+                    "shop1": {
+                        "products": {
+                            "1": {"name": "Item A", "price": 10.0},
+                        },
+                        "last_checked": "2026-01-01T00:00:00Z",
+                    }
+                }
+            )
+        )
         store = PriceStore(path)
         products = [Product(id="1", name="Item A", price=10.0)]
         diff = store.compare("shop1", products)
