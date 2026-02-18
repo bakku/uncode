@@ -1,1 +1,91 @@
-{}
+{
+  "oberpfalz-beef-lamm": {
+    "products": {
+      "100055": {
+        "name": "Lammracks",
+        "price": 39.71
+      },
+      "5513": {
+        "name": "Steaks aus der Lammkeule",
+        "price": 11.27
+      },
+      "5519": {
+        "name": "Lammkleinfleisch",
+        "price": 3.88
+      },
+      "5511": {
+        "name": "Lammhaxe",
+        "price": 16.76
+      },
+      "5501": {
+        "name": "Lammfilet",
+        "price": 16.7
+      },
+      "5515": {
+        "name": "Lammlachs",
+        "price": 25.88
+      },
+      "180": {
+        "name": "Lammkoteletts/ Chobs aus dem Rücken",
+        "price": 24.42
+      },
+      "5520": {
+        "name": "Lammhüfte",
+        "price": 7.64
+      },
+      "1597": {
+        "name": "Lammsoße im Glas",
+        "price": 6.4
+      },
+      "1454": {
+        "name": "Lammfond",
+        "price": 6.2
+      },
+      "2250": {
+        "name": "Lammkoteletts, Chobs aus dem Rücken",
+        "price": 24.43
+      },
+      "5506": {
+        "name": "Lammribs",
+        "price": 24.84
+      },
+      "5500": {
+        "name": "Lammschulter mit Knochen halb",
+        "price": 36.6
+      },
+      "177": {
+        "name": "Lammschulter mit Knochen",
+        "price": 63.19
+      },
+      "182": {
+        "name": "Lammrollbraten",
+        "price": 67.27
+      },
+      "5508": {
+        "name": "Lammrollbraten aus der Schulter",
+        "price": 42.28
+      },
+      "5509": {
+        "name": "Lammschäufele",
+        "price": 32.33
+      },
+      "2249": {
+        "name": "Lammkoteletts, Chobs aus dem Hals",
+        "price": 24.43
+      },
+      "181": {
+        "name": "Lammrücken/ Kotelett im Ganzen",
+        "price": 46.31
+      },
+      "183.1.800": {
+        "name": "Lammkeule",
+        "price": 63.29
+      },
+      "178": {
+        "name": "Lammhals mit Knochen",
+        "price": 43.69
+      }
+    },
+    "last_checked": "2026-02-18T16:11:09.740075+00:00"
+  }
+}
