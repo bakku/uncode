@@ -3,7 +3,7 @@
     "products": {
       "100055": {
         "name": "Lammracks",
-        "price": 39.71
+        "price": 34.75
       },
       "5513": {
         "name": "Steaks aus der Lammkeule",
@@ -86,6 +86,6 @@
         "price": 43.69
       }
     },
-    "last_checked": "2026-02-18T16:12:21.105133+00:00"
+    "last_checked": "2026-02-19T08:52:26.480569+00:00"
   }
 }
