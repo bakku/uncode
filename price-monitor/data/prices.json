@@ -73,19 +73,19 @@
         "name": "Lammkoteletts, Chobs aus dem Hals",
         "price": 24.43
       },
-      "181": {
-        "name": "Lammrücken/ Kotelett im Ganzen",
-        "price": 46.31
-      },
       "183.1.800": {
         "name": "Lammkeule",
         "price": 63.29
+      },
+      "181": {
+        "name": "Lammrücken/ Kotelett im Ganzen",
+        "price": 46.31
       },
       "178": {
         "name": "Lammhals mit Knochen",
         "price": 43.69
       }
     },
-    "last_checked": "2026-03-07T08:37:13.613114+00:00"
+    "last_checked": "2026-03-08T08:36:50.360786+00:00"
   }
 }
