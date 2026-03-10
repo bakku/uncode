@@ -1,8 +1,8 @@
 name: SQLAlchemy Daily Tip
 
 on:
-  schedule:
-    - cron: "0 7 * * *"
+  #schedule:
+  #  - cron: "0 7 * * *"
   workflow_dispatch:
 
 permissions:
