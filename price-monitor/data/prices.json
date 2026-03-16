@@ -3,11 +3,11 @@
     "products": {
       "100055": {
         "name": "Lammracks",
-        "price": 34.75
+        "price": 31.28
       },
       "5513": {
         "name": "Steaks aus der Lammkeule",
-        "price": 11.27
+        "price": 10.14
       },
       "5519": {
         "name": "Lammkleinfleisch",
@@ -19,7 +19,7 @@
       },
       "5501": {
         "name": "Lammfilet",
-        "price": 16.7
+        "price": 17.45
       },
       "5515": {
         "name": "Lammlachs",
@@ -27,11 +27,11 @@
       },
       "180": {
         "name": "Lammkoteletts/ Chobs aus dem Rücken",
-        "price": 24.42
+        "price": 21.9
       },
       "5520": {
         "name": "Lammhüfte",
-        "price": 7.64
+        "price": 6.38
       },
       "1597": {
         "name": "Lammsoße im Glas",
@@ -43,7 +43,7 @@
       },
       "2250": {
         "name": "Lammkoteletts, Chobs aus dem Rücken",
-        "price": 24.43
+        "price": 23.1
       },
       "5506": {
         "name": "Lammribs",
@@ -51,41 +51,41 @@
       },
       "5500": {
         "name": "Lammschulter mit Knochen halb",
-        "price": 36.6
+        "price": 41.4
       },
       "177": {
         "name": "Lammschulter mit Knochen",
-        "price": 63.19
+        "price": 68.25
       },
       "182": {
         "name": "Lammrollbraten",
-        "price": 67.27
+        "price": 60.53
       },
       "5508": {
         "name": "Lammrollbraten aus der Schulter",
-        "price": 42.28
+        "price": 44.76
       },
       "5509": {
         "name": "Lammschäufele",
-        "price": 32.33
-      },
-      "2249": {
-        "name": "Lammkoteletts, Chobs aus dem Hals",
-        "price": 24.43
+        "price": 34.5
       },
       "183.1.800": {
         "name": "Lammkeule",
         "price": 63.29
       },
+      "2249": {
+        "name": "Lammkoteletts, Chobs aus dem Hals",
+        "price": 23.1
+      },
       "181": {
         "name": "Lammrücken/ Kotelett im Ganzen",
-        "price": 46.31
+        "price": 43.8
       },
       "178": {
         "name": "Lammhals mit Knochen",
         "price": 43.69
       }
     },
-    "last_checked": "2026-03-10T08:51:20.693887+00:00"
+    "last_checked": "2026-03-16T09:02:32.632145+00:00"
   }
 }
