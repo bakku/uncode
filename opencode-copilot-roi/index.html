@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub Copilot ROI Calculator</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --border: #d0d7de;
+      --text: #1f2328;
+      --muted: #636c76;
+      --accent: #0969da;
+      --accent-bg: #ddf4ff;
+      --accent-border: #54aeff;
+      --success: #1a7f37;
+      --success-bg: #dcffe4;
+      --success-border: #4ac26b;
+      --warn: #9a6700;
+      --warn-bg: #fff8c5;
+      --warn-border: #d4a72c;
+      --danger: #cf222e;
+      --danger-bg: #fff0ed;
+      --danger-border: #ffcecb;
+      --radius: 8px;
+      --radius-sm: 6px;
+      --shadow: 0 1px 3px rgba(31,35,40,0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+    }
+    .header-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      background: #24292f;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .header-icon svg { display: block; }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header p { color: var(--muted); font-size: 13px; margin-top: 1px; }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    main {
+      max-width: 860px;
+      margin: 28px auto;
+      padding: 0 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Card ────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-step {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--surface);
+      background: var(--accent);
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .card-header h2 { font-size: 15px; font-weight: 600; }
+    .card-body { padding: 20px; }
+
+    /* ── Textarea ────────────────────────────────────────── */
+    .textarea-wrap { position: relative; }
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--text);
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    textarea:focus {
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 3px rgba(9,105,218,0.15);
+      background: var(--surface);
+    }
+    textarea::placeholder { color: var(--muted); }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .hint code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--text);
+    }
+
+    .actions { display: flex; gap: 8px; margin-top: 14px; }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: rgba(9,105,218,0.8);
+    }
+    .btn-primary:hover { background: #0860ca; }
+    .btn-primary:active { background: #0757ba; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+
+    /* ── Error ───────────────────────────────────────────── */
+    .error-box {
+      display: none;
+      margin-top: 12px;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--danger);
+    }
+
+    /* ── Plan grid ───────────────────────────────────────── */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .plan-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.12s, background 0.12s;
+      user-select: none;
+    }
+    .plan-card:hover {
+      border-color: var(--accent-border);
+      background: var(--accent-bg);
+    }
+    .plan-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+    .plan-name { font-size: 13px; font-weight: 600; }
+    .plan-price {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.2;
+      margin-top: 4px;
+    }
+    .plan-price-small { font-size: 14px; font-weight: 500; }
+    .plan-period { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Results section ─────────────────────────────────── */
+    .results-hidden { display: none; }
+
+    /* Summary pills */
+    .summary-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .summary-pill {
+      flex: 1;
+      min-width: 140px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+    .pill-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+    .pill-value { font-size: 20px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th:not(:first-child) { text-align: right; }
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+    }
+    tbody td:not(:first-child) { text-align: right; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--bg); }
+    tfoot td {
+      padding: 10px 12px;
+      font-weight: 600;
+      border-top: 2px solid var(--border);
+      font-variant-numeric: tabular-nums;
+    }
+    tfoot td:not(:first-child) { text-align: right; }
+    .model-name-cell {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .provider-badge {
+      display: inline-block;
+      font-size: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--muted);
+      margin-right: 6px;
+      font-family: inherit;
+      vertical-align: middle;
+    }
+
+    .pricing-note {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .pricing-note svg { flex-shrink: 0; }
+
+    /* ── Savings box ─────────────────────────────────────── */
+    .savings-box {
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .savings-box.positive {
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+    }
+    .savings-box.neutral {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+    }
+    .savings-amount {
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+    }
+    .savings-box.positive .savings-amount { color: var(--success); }
+    .savings-box.neutral .savings-amount { color: var(--warn); }
+    .savings-label {
+      font-size: 16px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .savings-breakdown {
+      margin-top: 20px;
+      display: flex;
+      gap: 0;
+      justify-content: center;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+    .breakdown-item {
+      padding: 8px 20px;
+      border-right: 1px solid rgba(0,0,0,0.1);
+    }
+    .breakdown-item:last-child { border-right: none; }
+    .breakdown-item-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .breakdown-item-value { font-size: 16px; font-weight: 700; margin-top: 2px; }
+    .savings-box.positive .breakdown-item-value { color: var(--success); }
+    .savings-box.neutral .breakdown-item-value { color: var(--warn); }
+    .multiplier-badge {
+      display: inline-block;
+      margin-top: 16px;
+      background: rgba(26,127,55,0.12);
+      color: var(--success);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+    .savings-box.neutral .multiplier-badge {
+      background: rgba(154,103,0,0.12);
+      color: var(--warn);
+    }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .summary-row { flex-direction: column; }
+      .savings-amount { font-size: 40px; }
+      .savings-breakdown { flex-direction: column; align-items: center; }
+      .breakdown-item { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.1); padding: 8px 0; }
+      .breakdown-item:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-icon">
+      <svg width="24" height="24" viewBox="0 0 16 16" fill="#fff">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+    </div>
+    <div>
+      <h1>GitHub Copilot ROI Calculator</h1>
+      <p>Find out how much you'd pay for the same AI usage via direct API &amp; how much you save with Copilot</p>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Step 1: Paste stats -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-step">Step 1</span>
+      <h2>Paste your opencode stats</h2>
+    </div>
+    <div class="card-body">
+      <textarea
+        id="statsInput"
+        spellcheck="false"
+        placeholder="Paste the full output of: opencode stats --models --days 31"
+      ></textarea>
+      <p class="hint">
+        Run <code>opencode stats --models --days 31</code> in your terminal, then paste the complete output above.
+        Only <strong>GitHub Copilot</strong> models will be included in the calculation.
+      </p>
+      <div class="actions">
+        <button class="btn-primary" onclick="calculate()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zM0 8a8 8 0 1116 0A8 8 0 010 8zm9 3H7v-2h2v2zm0-3H7V4h2v4z" clip-rule="evenodd" fill-rule="evenodd"/></svg>
+          Calculate ROI
+        </button>
+        <button class="btn-ghost" onclick="clearAll()">Clear</button>
+      </div>
+      <div class="error-box" id="errorBox"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: Plan selector -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-step">Step 2</span>
+      <h2>Select your GitHub Copilot plan</h2>
+    </div>
+    <div class="card-body">
+      <div class="plan-grid" id="planGrid"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card results-hidden" id="resultsCard">
+    <div class="card-header">
+      <h2>Model Breakdown</h2>
+    </div>
+    <div class="card-body">
+      <div class="summary-row" id="summaryRow"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Input Tokens</th>
+              <th>Output Tokens</th>
+              <th>Equivalent API Cost</th>
+            </tr>
+          </thead>
+          <tbody id="modelsBody"></tbody>
+          <tfoot id="modelsFoot"></tfoot>
+        </table>
+      </div>
+      <p class="pricing-note">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--muted)"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm6.5-.25A.75.75 0 017.25 7h1a.75.75 0 01.75.75v2.75h.25a.75.75 0 010 1.5h-2a.75.75 0 010-1.5h.25v-2h-.25a.75.75 0 01-.75-.75zM8 6a1 1 0 110-2 1 1 0 010 2z"/></svg>
+        Per-model pricing is applied where known. Unrecognised models fall back to Claude Sonnet 4.6 rates
+        ($3.00&thinsp;/&thinsp;1M input · $15.00&thinsp;/&thinsp;1M output).
+      </p>
+    </div>
+  </div>
+
+  <!-- Savings -->
+  <div class="card results-hidden" id="savingsCard">
+    <div class="card-header">
+      <h2>Your Savings</h2>
+    </div>
+    <div class="card-body">
+      <div class="savings-box" id="savingsBox">
+        <div class="savings-amount" id="savingsAmount"></div>
+        <div class="savings-label" id="savingsLabel"></div>
+        <div class="savings-breakdown" id="savingsBreakdown"></div>
+        <div id="multiplierBadge"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ── Config ──────────────────────────────────────────────
+  const PLANS = [
+    { id: 'pro',      name: 'Pro',  price: 10, period: 'per month' },
+    { id: 'pro_plus', name: 'Pro+', price: 39, period: 'per month' },
+  ];
+
+  // Prices in $ per million tokens.
+  // Keyed by exact model ID (without provider prefix). Unknown models fall back to default.
+  const MODEL_PRICING = {
+    'github-copilot/claude-haiku-4.5':        { inputPerM:  1.00, outputPerM:  5.00 },
+    'github-copilot/claude-opus-4.5':         { inputPerM:  5.00, outputPerM: 25.00 },
+    'github-copilot/claude-opus-4.6':         { inputPerM:  5.00, outputPerM: 25.00 },
+    'github-copilot/claude-opus-41':          { inputPerM: 15.00, outputPerM: 75.00 },
+    'github-copilot/claude-sonnet-4':         { inputPerM:  3.00, outputPerM: 15.00 },
+    'github-copilot/claude-sonnet-4.5':       { inputPerM:  3.00, outputPerM: 15.00 },
+    'github-copilot/claude-sonnet-4.6':       { inputPerM:  3.00, outputPerM: 15.00 },
+    'github-copilot/gemini-2.5-pro':          { inputPerM:  1.25, outputPerM: 10.00 },
+    'github-copilot/gemini-3-flash-preview':  { inputPerM:  0.50, outputPerM:  3.00 },
+    'github-copilot/gemini-3-pro-preview':    { inputPerM:  2.00, outputPerM: 12.00 },
+    'github-copilot/gemini-3.1-pro-preview':  { inputPerM:  2.00, outputPerM: 12.00 },
+    'github-copilot/gpt-4.1':                 { inputPerM:  2.00, outputPerM:  8.00 },
+    'github-copilot/gpt-4o':                  { inputPerM:  2.50, outputPerM: 10.00 },
+    'github-copilot/gpt-5':                   { inputPerM:  1.25, outputPerM: 10.00 },
+    'github-copilot/gpt-5-mini':              { inputPerM:  0.25, outputPerM:  2.00 },
+    'github-copilot/gpt-5.1':                 { inputPerM:  1.25, outputPerM: 10.00 },
+    'github-copilot/gpt-5.1-codex':           { inputPerM:  1.25, outputPerM: 10.00 },
+    'github-copilot/gpt-5.1-codex-max':       { inputPerM:  1.25, outputPerM: 10.00 },
+    'github-copilot/gpt-5.1-codex-mini':      { inputPerM:  0.25, outputPerM:  2.00 },
+    'github-copilot/gpt-5.2':                 { inputPerM:  1.75, outputPerM: 14.00 },
+    'github-copilot/gpt-5.2-codex':           { inputPerM:  1.75, outputPerM: 14.00 },
+    'github-copilot/gpt-5.3-codex':           { inputPerM:  1.75, outputPerM: 14.00 },
+    'github-copilot/gpt-5.4':                 { inputPerM:  2.50, outputPerM: 15.00 },
+    'github-copilot/grok-code-fast-1':        { inputPerM:  0.20, outputPerM:  1.50 },
+    // Fallback for any unrecognised model
+    default:                                  { inputPerM:  3.00, outputPerM: 15.00 },
+  };
+
+  // ── State ───────────────────────────────────────────────
+  let selectedPlanId = 'pro';
+  let lastTotalApiCost = null;
+
+  // ── Helpers ─────────────────────────────────────────────
+  function getPricing(modelName) {
+    return MODEL_PRICING[modelName] ?? MODEL_PRICING.default;
+  }
+
+  function parseTokens(raw) {
+    if (!raw) return 0;
+    const s = raw.trim().replace(/,/g, '');
+    const n = parseFloat(s);
+    if (isNaN(n)) return 0;
+    if (s.endsWith('B')) return n * 1e9;
+    if (s.endsWith('M')) return n * 1e6;
+    if (s.endsWith('K')) return n * 1e3;
+    return n;
+  }
+
+  function fmtTokens(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toLocaleString();
+  }
+
+  function fmtMoney(n) {
+    if (n === 0) return '$0.00';
+    if (n < 0.005) return '<$0.01';
+    return '$' + n.toFixed(2);
+  }
+
+  function fmtSavings(n) {
+    return '$' + Math.abs(n).toFixed(2);
+  }
+
+  // ── Parser ───────────────────────────────────────────────
+  function parseStats(text) {
+    const lines = text.split('\n');
+    const models = [];
+    let inSection = false;
+    let current = null;
+
+    for (const line of lines) {
+      if (line.includes('MODEL USAGE')) { inSection = true; continue; }
+      if (!inSection) continue;
+      if (line.includes('TOOL USAGE')) break;
+
+      // Model name line: │ provider/model-name ...
+      // Match any provider/model path (1+ slash-separated segments) so multi-segment
+    // providers like openrouter/moonshotai/kimi-k2.5 are correctly detected as
+    // model boundaries even though we only keep github-copilot/* models.
+    const nameMatch = line.match(/[│|]\s+([\w][\w.-]*(?:\/[\w][\w.\-]*)+)\s/);
+      if (nameMatch) {
+        if (current) models.push(current);
+        current = { name: nameMatch[1], inputTokens: 0, outputTokens: 0 };
+        continue;
+      }
+
+      if (!current) continue;
+
+      const inputMatch  = line.match(/Input Tokens\s+([\d.]+[KMBkmb]?)\s*[│|]/);
+      const outputMatch = line.match(/Output Tokens\s+([\d.]+[KMBkmb]?)\s*[│|]/);
+      if (inputMatch)  current.inputTokens  = parseTokens(inputMatch[1]);
+      if (outputMatch) current.outputTokens = parseTokens(outputMatch[1]);
+    }
+
+    if (current) models.push(current);
+    return models;
+  }
+
+  // ── Calculate ────────────────────────────────────────────
+  function calculate() {
+    const raw = document.getElementById('statsInput').value;
+    const errorBox = document.getElementById('errorBox');
+    errorBox.style.display = 'none';
+
+    if (!raw.trim()) {
+      showError('Please paste the output of: opencode stats --models --days 31');
+      return;
+    }
+
+    const all = parseStats(raw);
+    if (all.length === 0) {
+      showError('No model usage data found. Paste the complete output including the MODEL USAGE section.');
+      return;
+    }
+
+    const copilot = all.filter(m => m.name.startsWith('github-copilot/'));
+    if (copilot.length === 0) {
+      showError(
+        'No GitHub Copilot models found in the output. ' +
+        'Make sure your opencode sessions use github-copilot/* models.'
+      );
+      return;
+    }
+
+    const models = copilot.map(m => {
+      const p = getPricing(m.name);
+      const inputCost  = (m.inputTokens  / 1e6) * p.inputPerM;
+      const outputCost = (m.outputTokens / 1e6) * p.outputPerM;
+      return { ...m, inputCost, outputCost, totalCost: inputCost + outputCost };
+    });
+
+    renderResults(models);
+  }
+
+  function renderResults(models) {
+    const totalInput  = models.reduce((s, m) => s + m.inputTokens,  0);
+    const totalOutput = models.reduce((s, m) => s + m.outputTokens, 0);
+    const totalCost   = models.reduce((s, m) => s + m.totalCost,    0);
+    lastTotalApiCost  = totalCost;
+
+    // Summary pills
+    document.getElementById('summaryRow').innerHTML = [
+      { label: 'Copilot Models', value: models.length },
+      { label: 'Total Input',    value: fmtTokens(totalInput) },
+      { label: 'Total Output',   value: fmtTokens(totalOutput) },
+      { label: 'API Equivalent', value: fmtMoney(totalCost) },
+    ].map(s => `
+      <div class="summary-pill">
+        <div class="pill-label">${s.label}</div>
+        <div class="pill-value">${s.value}</div>
+      </div>
+    `).join('');
+
+    // Table rows
+    document.getElementById('modelsBody').innerHTML = models.map(m => {
+      const shortName = m.name.replace('github-copilot/', '');
+      return `
+        <tr>
+          <td class="model-name-cell">
+            <span class="provider-badge">copilot</span>${shortName}
+          </td>
+          <td>${fmtTokens(m.inputTokens)}</td>
+          <td>${fmtTokens(m.outputTokens)}</td>
+          <td>${fmtMoney(m.totalCost)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Total row
+    document.getElementById('modelsFoot').innerHTML = `
+      <tr>
+        <td>Total (${models.length} model${models.length !== 1 ? 's' : ''})</td>
+        <td>${fmtTokens(totalInput)}</td>
+        <td>${fmtTokens(totalOutput)}</td>
+        <td>${fmtMoney(totalCost)}</td>
+      </tr>
+    `;
+
+    document.getElementById('resultsCard').classList.remove('results-hidden');
+    document.getElementById('savingsCard').classList.remove('results-hidden');
+
+    renderSavings();
+
+    document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderSavings() {
+    if (lastTotalApiCost === null) return;
+
+    const plan     = PLANS.find(p => p.id === selectedPlanId) || PLANS[1];
+    const apiCost  = lastTotalApiCost;
+    const planCost = plan.price;
+    const savings  = apiCost - planCost;
+    const positive = savings >= 0;
+
+    const box       = document.getElementById('savingsBox');
+    const amountEl  = document.getElementById('savingsAmount');
+    const labelEl   = document.getElementById('savingsLabel');
+    const breakEl   = document.getElementById('savingsBreakdown');
+    const badgeEl   = document.getElementById('multiplierBadge');
+
+    box.className = 'savings-box ' + (positive ? 'positive' : 'neutral');
+    amountEl.textContent = fmtSavings(savings);
+
+    if (positive) {
+      labelEl.textContent = `saved this month with Copilot ${plan.name}`;
+    } else {
+      labelEl.textContent = `more than equivalent API costs on Copilot ${plan.name}`;
+    }
+
+    breakEl.innerHTML = [
+      { label: 'API Equivalent', value: fmtMoney(apiCost) },
+      { label: `Copilot ${plan.name}`, value: planCost === 0 ? 'Free' : fmtMoney(planCost) + '/mo' },
+      { label: 'You saved', value: positive ? fmtSavings(savings) : '—' },
+    ].map(item => `
+      <div class="breakdown-item">
+        <div class="breakdown-item-label">${item.label}</div>
+        <div class="breakdown-item-value">${item.value}</div>
+      </div>
+    `).join('');
+
+    // Value multiplier badge
+    if (apiCost > 0) {
+      const mult = (apiCost / planCost).toFixed(1);
+      badgeEl.innerHTML = `<div class="multiplier-badge">${mult}× value vs. paying per API call</div>`;
+    } else {
+      badgeEl.innerHTML = '';
+    }
+  }
+
+  // ── Error ────────────────────────────────────────────────
+  function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  // ── Clear ────────────────────────────────────────────────
+  function clearAll() {
+    document.getElementById('statsInput').value = '';
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('resultsCard').classList.add('results-hidden');
+    document.getElementById('savingsCard').classList.add('results-hidden');
+    lastTotalApiCost = null;
+  }
+
+  // ── Plan grid ────────────────────────────────────────────
+  function selectPlan(id) {
+    selectedPlanId = id;
+    renderPlanGrid();
+    renderSavings();
+  }
+
+  function renderPlanGrid() {
+    document.getElementById('planGrid').innerHTML = PLANS.map(plan => `
+      <div
+        class="plan-card${plan.id === selectedPlanId ? ' selected' : ''}"
+        onclick="selectPlan('${plan.id}')"
+        role="radio"
+        aria-checked="${plan.id === selectedPlanId}"
+        tabindex="0"
+        onkeydown="if(event.key==='Enter'||event.key===' ')selectPlan('${plan.id}')"
+      >
+        <div class="plan-name">${plan.name}</div>
+        <div class="plan-price">
+          ${plan.price === 0
+            ? '<span>Free</span>'
+            : `<span>$${plan.price}</span><span class="plan-price-small"></span>`
+          }
+        </div>
+        <div class="plan-period">${plan.period || '&nbsp;'}</div>
+      </div>
+    `).join('');
+  }
+
+  // Init
+  renderPlanGrid();
+</script>
+</body>
+</html>
