@@ -53,13 +53,13 @@
         "name": "Lammschulter mit Knochen halb",
         "price": 41.4
       },
-      "177": {
-        "name": "Lammschulter mit Knochen",
-        "price": 68.25
-      },
       "182": {
         "name": "Lammrollbraten",
         "price": 60.53
+      },
+      "177": {
+        "name": "Lammschulter mit Knochen",
+        "price": 68.25
       },
       "5508": {
         "name": "Lammrollbraten aus der Schulter",
@@ -86,6 +86,6 @@
         "price": 43.69
       }
     },
-    "last_checked": "2026-03-19T08:50:33.050127+00:00"
+    "last_checked": "2026-03-20T08:49:34.553279+00:00"
   }
 }
