@@ -41,13 +41,17 @@
         "name": "Lammfond",
         "price": 6.2
       },
+      "2250": {
+        "name": "Lammkoteletts, Chobs aus dem Rücken",
+        "price": 23.1
+      },
       "5506": {
         "name": "Lammribs",
         "price": 24.84
       },
-      "2250": {
-        "name": "Lammkoteletts, Chobs aus dem Rücken",
-        "price": 23.1
+      "182": {
+        "name": "Lammrollbraten",
+        "price": 60.53
       },
       "5500": {
         "name": "Lammschulter mit Knochen halb",
@@ -56,10 +60,6 @@
       "177": {
         "name": "Lammschulter mit Knochen",
         "price": 68.25
-      },
-      "182": {
-        "name": "Lammrollbraten",
-        "price": 60.53
       },
       "183.1.800": {
         "name": "Lammkeule",
@@ -86,6 +86,6 @@
         "price": 43.69
       }
     },
-    "last_checked": "2026-03-22T08:39:59.060416+00:00"
+    "last_checked": "2026-03-23T09:02:39.768986+00:00"
   }
 }
