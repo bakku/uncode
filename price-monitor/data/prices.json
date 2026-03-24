@@ -3,11 +3,11 @@
     "products": {
       "100055": {
         "name": "Lammracks",
-        "price": 31.28
+        "price": 34.75
       },
       "5513": {
         "name": "Steaks aus der Lammkeule",
-        "price": 10.14
+        "price": 11.27
       },
       "5519": {
         "name": "Lammkleinfleisch",
@@ -51,7 +51,7 @@
       },
       "182": {
         "name": "Lammrollbraten",
-        "price": 60.53
+        "price": 67.27
       },
       "5500": {
         "name": "Lammschulter mit Knochen halb",
@@ -69,6 +69,10 @@
         "name": "Lammrollbraten aus der Schulter",
         "price": 44.76
       },
+      "181": {
+        "name": "Lammrücken/ Kotelett im Ganzen",
+        "price": 43.8
+      },
       "5509": {
         "name": "Lammschäufele",
         "price": 34.5
@@ -77,15 +81,11 @@
         "name": "Lammkoteletts, Chobs aus dem Hals",
         "price": 23.1
       },
-      "181": {
-        "name": "Lammrücken/ Kotelett im Ganzen",
-        "price": 43.8
-      },
       "178": {
         "name": "Lammhals mit Knochen",
         "price": 43.69
       }
     },
-    "last_checked": "2026-03-23T09:02:39.768986+00:00"
+    "last_checked": "2026-03-24T08:58:08.912918+00:00"
   }
 }
