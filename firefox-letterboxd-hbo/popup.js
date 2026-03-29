@@ -9,10 +9,17 @@ async function updateStatus() {
     });
     const tab = tabs[0];
 
-    if (tab && tab.url && tab.url.includes("play.max.com")) {
-      status.classList.add("active");
-      status.classList.remove("inactive");
-      statusText.textContent = "Active on HBO Max";
+    if (tab && tab.url) {
+      const url = new URL(tab.url);
+      if (url.hostname === "play.max.com") {
+        status.classList.add("active");
+        status.classList.remove("inactive");
+        statusText.textContent = "Active on HBO Max";
+      } else {
+        status.classList.add("inactive");
+        status.classList.remove("active");
+        statusText.textContent = "Navigate to play.max.com to use";
+      }
     } else {
       status.classList.add("inactive");
       status.classList.remove("active");

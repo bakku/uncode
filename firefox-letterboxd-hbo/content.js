@@ -34,7 +34,10 @@ function getFilmTitle() {
 
 function isDetailPage() {
   const path = window.location.pathname;
-  return /^\/(movie|film|feature)\//.test(path) || /^\/[^/]+\/[^/]+$/.test(path);
+  // HBO Max uses paths like /movie/<slug> and /feature/<slug> for film pages.
+  // The second pattern matches /<section>/<slug> (e.g. /video/watch/...)
+  // which covers other possible HBO Max detail page layouts.
+  return /^\/(movie|film|feature)\//.test(path) || /^\/video\/watch\//.test(path);
 }
 
 function removeBadge() {
@@ -162,15 +165,16 @@ function onUrlChange() {
   }
 }
 
+// Use a MutationObserver as the primary mechanism to detect SPA navigation
+// and page content changes on HBO Max.
 const observer = new MutationObserver(() => {
   onUrlChange();
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
 
-setInterval(() => {
-  onUrlChange();
-  checkForFilm();
-}, CHECK_INTERVAL_MS);
+// Fallback polling interval for cases where DOM mutations don't fire
+// (e.g. HBO Max updates content without triggering observable mutations).
+setInterval(onUrlChange, CHECK_INTERVAL_MS);
 
 checkForFilm();

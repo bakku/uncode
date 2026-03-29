@@ -37,6 +37,9 @@ async function searchAndFetchRating(title) {
   }
 
   const html = await response.text();
+  // Extract the first film link from the search results page.
+  // This relies on Letterboxd's search result HTML structure — if they
+  // change their markup, this pattern may need updating.
   const filmLinkMatch = html.match(
     /<span class="film-title-wrapper">\s*<a href="(\/film\/[^"]+\/)"/
   );
@@ -55,6 +58,9 @@ async function searchAndFetchRating(title) {
 }
 
 function parseRatingFromHtml(html, url) {
+  // Extract rating from Letterboxd's Twitter Card meta tag.
+  // This relies on the "twitter:data2" meta tag containing the average
+  // rating — if Letterboxd changes their meta tags, this may need updating.
   const ratingMatch = html.match(
     /name="twitter:data2"\s+content="([\d.]+) out of 5"/
   );

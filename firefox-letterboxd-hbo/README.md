@@ -39,7 +39,7 @@ A Firefox extension that displays [Letterboxd](https://letterboxd.com) ratings f
 
 | File | Description |
 |------|-------------|
-| `manifest.json` | Extension manifest (Manifest V2) |
+| `manifest.json` | Extension manifest (Manifest V3) |
 | `content.js` | Content script injected into HBO Max pages |
 | `background.js` | Background script handling Letterboxd requests |
 | `styles.css` | Styles for the rating badge |
