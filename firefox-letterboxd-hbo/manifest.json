@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "name": "Letterboxd Ratings for HBO Max",
+  "version": "1.0.0",
+  "description": "Shows Letterboxd ratings for films while browsing HBO Max (play.max.com).",
+  "icons": {
+    "48": "icons/icon-48.svg",
+    "96": "icons/icon-96.svg"
+  },
+  "permissions": [
+    "https://letterboxd.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://play.max.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_icon": {
+      "48": "icons/icon-48.svg"
+    },
+    "default_title": "Letterboxd Ratings for HBO Max",
+    "default_popup": "popup.html"
+  }
+}

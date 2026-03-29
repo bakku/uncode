@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <div class="popup-header">
+      <svg width="24" height="24" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="250" cy="250" r="240" fill="#00E054"/>
+        <circle cx="160" cy="250" r="80" fill="#40BCF4" opacity="0.8"/>
+        <circle cx="340" cy="250" r="80" fill="#FF8000" opacity="0.8"/>
+      </svg>
+      <h1>Letterboxd for HBO Max</h1>
+    </div>
+    <p class="popup-description">
+      Browse a film on <strong>play.max.com</strong> to see its Letterboxd rating
+      appear next to the title.
+    </p>
+    <div id="status" class="popup-status">
+      <span id="status-text">Waiting for HBO Max…</span>
+    </div>
+    <a href="https://letterboxd.com" target="_blank" rel="noopener noreferrer" class="popup-link">
+      Visit Letterboxd ↗
+    </a>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
