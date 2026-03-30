@@ -53,13 +53,13 @@
         "name": "Lammribs",
         "price": 24.84
       },
-      "5500": {
-        "name": "Lammschulter mit Knochen halb",
-        "price": 41.4
-      },
       "183.1.800": {
         "name": "Lammkeule",
         "price": 63.29
+      },
+      "5500": {
+        "name": "Lammschulter mit Knochen halb",
+        "price": 41.4
       },
       "177": {
         "name": "Lammschulter mit Knochen",
@@ -86,6 +86,6 @@
         "price": 43.69
       }
     },
-    "last_checked": "2026-03-29T08:48:23.188550+00:00"
+    "last_checked": "2026-03-30T09:18:19.861756+00:00"
   }
 }
