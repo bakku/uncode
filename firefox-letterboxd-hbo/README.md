@@ -1,6 +1,6 @@
 # Letterboxd Ratings for HBO Max
 
-A Firefox extension that displays [Letterboxd](https://letterboxd.com) ratings for films while browsing [HBO Max](https://play.max.com).
+A Firefox extension that displays [Letterboxd](https://letterboxd.com) ratings for films while browsing [HBO Max](https://play.hbomax.com).
 
 ## Features
 
@@ -29,7 +29,7 @@ A Firefox extension that displays [Letterboxd](https://letterboxd.com) ratings f
 
 ## How It Works
 
-1. **Content Script** (`content.js`) runs on `play.max.com` pages and monitors for film detail pages
+1. **Content Script** (`content.js`) runs on `play.hbomax.com` pages and monitors for film detail pages
 2. When a film title is detected, it sends a message to the **Background Script** (`background.js`)
 3. The background script fetches the film's page from Letterboxd (first trying a direct slug match, then falling back to search)
 4. The rating is extracted and sent back to the content script
@@ -51,4 +51,4 @@ A Firefox extension that displays [Letterboxd](https://letterboxd.com) ratings f
 ## Permissions
 
 - **`https://letterboxd.com/*`** — Required to fetch film ratings from Letterboxd
-- **Content script access to `play.max.com`** — Required to detect films and inject the rating badge
+- **Content script access to `play.hbomax.com`** — Required to detect films and inject the rating badge
