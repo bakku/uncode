@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dry Day Finder</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,sans-serif;font-size:16px;color:#1e293b}
+body{background:#f1f5f9;min-height:100vh;display:flex;flex-direction:column}
+a{color:#2563eb;text-decoration:none}
+a:hover{text-decoration:underline}
+
+.header{background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;padding:2rem 1rem;text-align:center}
+.header h1{font-size:1.75rem;font-weight:700;margin-bottom:.25rem}
+.header p{font-size:.95rem;opacity:.85}
+
+.container{max-width:640px;margin:0 auto;padding:1.5rem 1rem;flex:1;width:100%}
+
+.search-card{background:#fff;border-radius:12px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:1.5rem}
+.search-card label{display:block;font-weight:600;margin-bottom:.5rem;font-size:.9rem}
+.input-wrap{position:relative}
+.input-wrap input{width:100%;padding:.75rem 1rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:1rem;outline:none;transition:border-color .2s}
+.input-wrap input:focus{border-color:#3b82f6}
+.input-wrap input:disabled{background:#f8fafc;cursor:not-allowed}
+
+.autocomplete{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;max-height:240px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.autocomplete.open{display:block}
+.autocomplete-item{padding:.65rem 1rem;cursor:pointer;font-size:.9rem;border-bottom:1px solid #f1f5f9}
+.autocomplete-item:last-child{border-bottom:none}
+.autocomplete-item:hover,.autocomplete-item.active{background:#eff6ff}
+.autocomplete-item .country{color:#64748b;font-size:.8rem}
+.autocomplete-item .highlight{font-weight:600}
+
+.search-btn{display:block;width:100%;margin-top:1rem;padding:.75rem;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.search-btn:hover{opacity:.9}
+.search-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.status{text-align:center;padding:2rem 0}
+.spinner{width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto .75rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status p{color:#64748b;font-size:.9rem}
+
+.results{margin-top:1rem}
+.result-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+.result-header h2{font-size:1.2rem;font-weight:700}
+.result-header .count{color:#64748b;font-size:.85rem}
+.result-header .location-name{font-size:.85rem;color:#3b82f6;font-weight:500}
+
+.month-group{margin-bottom:1.25rem}
+.month-title{font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin-bottom:.4rem;padding:0 .5rem}
+.day-row{display:flex;align-items:center;padding:.4rem .5rem;border-radius:6px;transition:background .15s}
+.day-row:hover{background:#f8fafc}
+.day-row .date{font-weight:600;min-width:6rem;font-size:.95rem}
+.day-row .weekday{font-size:.85rem;color:#64748b;display:flex;gap:.5rem;flex-wrap:wrap}
+.day-row .weekday span{display:inline-flex;align-items:center;gap:.2rem}
+.day-row .weekday .label{color:#94a3b8;font-size:.75rem}
+.day-row .weekday .na{color:#cbd5e1;font-style:italic}
+
+.no-results{text-align:center;padding:2.5rem 1rem;color:#64748b}
+.no-results .icon{font-size:2.5rem;margin-bottom:.75rem;display:block}
+.no-results h3{font-size:1.1rem;margin-bottom:.35rem;color:#1e293b}
+.no-results p{font-size:.9rem;line-height:1.5}
+
+.error-msg{text-align:center;padding:2rem 1rem;color:#dc2626}
+.error-msg .icon{font-size:2rem;margin-bottom:.5rem;display:block}
+.error-msg p{font-size:.9rem}
+
+.selected-info{display:none;align-items:center;gap:.5rem;margin-top:.75rem;padding:.5rem .75rem;background:#f0f9ff;border-radius:6px;font-size:.85rem;color:#1e40af}
+.selected-info.show{display:flex}
+.selected-info .change-btn{margin-left:auto;font-size:.8rem;color:#3b82f6;cursor:pointer;font-weight:600;background:none;border:none}
+.selected-info .change-btn:hover{text-decoration:underline}
+
+.footer{text-align:center;padding:1.5rem;font-size:.8rem;color:#94a3b8;border-top:1px solid #e2e8f0;margin-top:auto}
+.footer a{color:#94a3b8}
+.footer a:hover{color:#64748b}
+
+@media(max-width:480px){
+  .header{padding:1.5rem 1rem}
+  .header h1{font-size:1.35rem}
+  .container{padding:1rem .75rem}
+  .search-card{padding:1rem}
+  .day-row{flex-direction:column;align-items:flex-start;gap:.15rem;padding:.5rem}
+  .day-row .date{min-width:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>Dry Day Finder</h1>
+  <p>Find the perfect date for your outdoor event</p>
+</header>
+
+<div class="container">
+  <div class="search-card">
+    <label for="location">Location</label>
+    <div class="input-wrap">
+      <input type="text" id="location" placeholder="Search for a city..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="autocomplete" id="autocomplete"></div>
+    </div>
+    <div class="selected-info" id="selectedInfo">
+      <span id="selectedName"></span>
+      <button class="change-btn" id="changeBtn">Change</button>
+    </div>
+    <button class="search-btn" id="searchBtn" disabled>Find Dry Days</button>
+  </div>
+
+  <div id="status"></div>
+  <div id="results"></div>
+</div>
+
+<footer class="footer">
+  Powered by <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>
+</footer>
+
+<script>
+(function(){
+  const locationInput = document.getElementById('location');
+  const autocomplete = document.getElementById('autocomplete');
+  const selectedInfo = document.getElementById('selectedInfo');
+  const selectedName = document.getElementById('selectedName');
+  const changeBtn = document.getElementById('changeBtn');
+  const searchBtn = document.getElementById('searchBtn');
+  const statusEl = document.getElementById('status');
+  const resultsEl = document.getElementById('results');
+
+  let selectedLocation = null;
+  let activeIndex = -1;
+  let isFetching = false;
+
+  function debounce(fn, ms) {
+    let t;
+    return function(...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
+  async function fetchSuggestions(query) {
+    if (!query || query.length < 2) {
+      autocomplete.classList.remove('open');
+      return;
+    }
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=8&language=en&format=json`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (!data.results || data.results.length === 0) {
+        autocomplete.classList.remove('open');
+        return;
+      }
+      renderSuggestions(data.results);
+    } catch(e) {
+      autocomplete.classList.remove('open');
+    }
+  }
+
+  function formatLocation(loc) {
+    const parts = [loc.name];
+    if (loc.admin1 && loc.admin1 !== loc.name) parts.push(loc.admin1);
+    if (loc.country) parts.push(loc.country);
+    return parts.join(', ');
+  }
+
+  function renderSuggestions(results) {
+    autocomplete.innerHTML = '';
+    results.forEach((loc, i) => {
+      const div = document.createElement('div');
+      div.className = 'autocomplete-item';
+      div.innerHTML = `<span class="highlight">${loc.name}</span> <span class="country">${formatLocation(loc)}</span>`;
+      div.dataset.index = i;
+      div.addEventListener('click', () => selectLocation(loc));
+      autocomplete.appendChild(div);
+    });
+    autocomplete.classList.add('open');
+    activeIndex = -1;
+  }
+
+  function selectLocation(loc) {
+    selectedLocation = loc;
+    const formatted = formatLocation(loc);
+    locationInput.value = loc.name;
+    locationInput.disabled = true;
+    selectedName.textContent = formatted;
+    selectedInfo.classList.add('show');
+    autocomplete.classList.remove('open');
+    searchBtn.disabled = false;
+  }
+
+  function clearSelection() {
+    selectedLocation = null;
+    locationInput.disabled = false;
+    locationInput.value = '';
+    locationInput.focus();
+    selectedInfo.classList.remove('show');
+    searchBtn.disabled = true;
+    resultsEl.innerHTML = '';
+    statusEl.innerHTML = '';
+  }
+
+  function closeAutocomplete() {
+    autocomplete.classList.remove('open');
+  }
+
+  const debouncedFetch = debounce(fetchSuggestions, 300);
+
+  locationInput.addEventListener('input', function() {
+    if (selectedLocation) return;
+    debouncedFetch(this.value.trim());
+  });
+
+  locationInput.addEventListener('focus', function() {
+    if (!selectedLocation && this.value.trim().length >= 2) {
+      fetchSuggestions(this.value.trim());
+    }
+  });
+
+  locationInput.addEventListener('blur', function() {
+    setTimeout(closeAutocomplete, 200);
+  });
+
+  locationInput.addEventListener('keydown', function(e) {
+    const items = autocomplete.querySelectorAll('.autocomplete-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+      updateActive(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+      updateActive(items);
+    } else if (e.key === 'Enter' && activeIndex >= 0 && items[activeIndex]) {
+      e.preventDefault();
+      items[activeIndex].click();
+    } else if (e.key === 'Escape') {
+      closeAutocomplete();
+    }
+  });
+
+  function updateActive(items) {
+    items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+    if (items[activeIndex]) {
+      items[activeIndex].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  changeBtn.addEventListener('click', clearSelection);
+
+  searchBtn.addEventListener('click', findDryDays);
+
+  async function findDryDays() {
+    if (!selectedLocation || isFetching) return;
+
+    isFetching = true;
+    searchBtn.disabled = true;
+    resultsEl.innerHTML = '';
+
+    statusEl.innerHTML = '<div class="status"><div class="spinner"></div><p>Fetching 5 years of weather data…</p></div>';
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const startYear = currentYear - 5;
+    const endYear = currentYear - 1;
+    const startDate = `${startYear}-01-01`;
+    const endDate = `${endYear}-12-31`;
+
+    try {
+      const res = await fetch(
+        `https://archive-api.open-meteo.com/v1/archive?` +
+        `latitude=${selectedLocation.latitude}&longitude=${selectedLocation.longitude}` +
+        `&start_date=${startDate}&end_date=${endDate}` +
+        `&daily=precipitation_sum&timezone=auto`
+      );
+      if (!res.ok) throw new Error(`API responded with ${res.status}`);
+      const data = await res.json();
+
+      statusEl.innerHTML = '<div class="status"><div class="spinner"></div><p>Analyzing days…</p></div>';
+      await new Promise(r => setTimeout(r, 80));
+
+      const dryDays = processData(data);
+
+      renderResults(dryDays, currentYear);
+    } catch(e) {
+      statusEl.innerHTML = `<div class="error-msg"><span class="icon">⚠️</span><p>Failed to fetch weather data. Please check the location and try again.</p></div>`;
+    } finally {
+      isFetching = false;
+      searchBtn.disabled = false;
+      if (!statusEl.querySelector('.error-msg') && !statusEl.querySelector('.status')) {
+        statusEl.innerHTML = '';
+      }
+    }
+  }
+
+  function processData(data) {
+    const times = data.daily.time;
+    const precip = data.daily.precipitation_sum;
+
+    if (!times || !precip || times.length === 0) {
+      return [];
+    }
+
+    const byMonthDay = {};
+
+    for (let i = 0; i < times.length; i++) {
+      const dateStr = times[i];
+      const val = precip[i];
+      const monthDay = dateStr.slice(5);
+
+      if (!byMonthDay[monthDay]) {
+        byMonthDay[monthDay] = [];
+      }
+      byMonthDay[monthDay].push(val);
+    }
+
+    const dry = [];
+    for (const [md, vals] of Object.entries(byMonthDay)) {
+      const allDry = vals.every(v => v === 0 || v === null || v === undefined);
+      if (allDry) {
+        dry.push(md);
+      }
+    }
+
+    dry.sort((a, b) => a.localeCompare(b));
+    return dry;
+  }
+
+  function getWeekday(monthDay, year) {
+    const parts = monthDay.split('-');
+    const month = parseInt(parts[0], 10);
+    const day = parseInt(parts[1], 10);
+    const date = new Date(year, month - 1, day);
+    if (date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null;
+    }
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  }
+
+  function formatDate(monthDay) {
+    const parts = monthDay.split('-');
+    const month = parseInt(parts[0], 10);
+    const day = parseInt(parts[1], 10);
+    const date = new Date(2000, month - 1, day);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function renderResults(dryDays, currentYear) {
+    statusEl.innerHTML = '';
+
+    if (dryDays.length === 0) {
+      resultsEl.innerHTML = `
+        <div class="no-results">
+          <span class="icon">☀️</span>
+          <h3>No reliably dry days found</h3>
+          <p>In the last 5 years, there was at least some precipitation on every calendar day at this location. Consider checking a different location or a longer timeframe.</p>
+        </div>`;
+      return;
+    }
+
+    const nextYear = currentYear + 1;
+    let html = '<div class="results">';
+
+    html += `<div class="result-header">
+      <div><h2>Reliably Dry Days</h2></div>
+      <div class="count">${dryDays.length} day${dryDays.length !== 1 ? 's' : ''}</div>
+    </div>`;
+
+    let prevMonth = '';
+    for (const monthDay of dryDays) {
+      const month = monthDay.split('-')[0];
+
+      if (month !== prevMonth) {
+        if (prevMonth !== '') html += '</div>';
+        prevMonth = month;
+        const d = new Date(2000, parseInt(month, 10) - 1, 1);
+        html += `<div class="month-group"><div class="month-title">${d.toLocaleDateString('en-US', { month: 'long' })}</div>`;
+      }
+
+      const wdThis = getWeekday(monthDay, currentYear);
+      const wdNext = getWeekday(monthDay, nextYear);
+
+      html += `<div class="day-row">
+        <div class="date">${formatDate(monthDay)}</div>
+        <div class="weekday">
+          <span>${currentYear}: <strong>${wdThis || '<span class="na">N/A</span>'}</strong></span>
+          <span>${nextYear}: <strong>${wdNext || '<span class="na">N/A</span>'}</strong></span>
+        </div>
+      </div>`;
+    }
+
+    if (prevMonth !== '') html += '</div>';
+    html += '</div>';
+    resultsEl.innerHTML = html;
+  }
+})();
+</script>
+</body>
+</html>

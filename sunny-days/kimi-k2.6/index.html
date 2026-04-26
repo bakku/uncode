@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfect Day Planner — Find Rain-Free Event Dates</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1e4ed8;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --success: #059669;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 3rem 1rem 4rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+      color: var(--text);
+    }
+
+    header p {
+      color: var(--text-light);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Search */
+    .search-wrap {
+      position: relative;
+      max-width: 520px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 1rem 1.25rem;
+      font-size: 1rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      background: var(--card);
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+    }
+
+    .autocomplete {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      z-index: 50;
+      max-height: 280px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .autocomplete-item {
+      padding: 0.9rem 1.15rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+    }
+
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:hover, .autocomplete-item.active {
+      background: #f1f5f9;
+    }
+    .autocomplete-item .name { font-weight: 600; font-size: 0.95rem; }
+    .autocomplete-item .meta { font-size: 0.82rem; color: var(--text-light); margin-top: 1px; }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 3rem 1rem;
+      display: none;
+    }
+    .loading.active { display: block; }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #e2e8f0;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto .9rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: var(--text-light); font-size: 0.95rem; }
+    .loading small { color: #94a3b8; font-size: 0.8rem; display: block; margin-top: .35rem; }
+
+    /* Results */
+    .results { display: none; margin-top: 1.5rem; }
+    .results.active { display: block; }
+
+    .results-header {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .results-header h2 {
+      font-size: clamp(1.25rem, 3vw, 1.6rem);
+      font-weight: 700;
+      margin-bottom: .25rem;
+    }
+    .results-header p {
+      color: var(--text-light);
+      font-size: 0.95rem;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .results-header .note {
+      color: #94a3b8;
+      font-size: 0.8rem;
+      margin-top: .4rem;
+    }
+
+    .day-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1.35rem 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: .85rem;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeUp .35s ease forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .day-card .date-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: .8rem;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .day-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 520px) {
+      .day-row { grid-template-columns: 1fr; gap: .6rem; }
+    }
+
+    .day-col .label {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-light);
+      font-weight: 600;
+      margin-bottom: .15rem;
+    }
+    .day-col .value {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 2.8rem 1.5rem;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      display: none;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .empty-state.active { display: block; }
+    .empty-state h3 { font-size: 1.15rem; margin-bottom: .4rem; color: var(--text); }
+    .empty-state p { color: var(--text-light); font-size: 0.95rem; line-height: 1.6; }
+    .empty-state .icon { font-size: 2.2rem; margin-bottom: .6rem; opacity: .7; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Perfect Day Planner</h1>
+      <p>Discover the best rain-free dates for weddings, feasts, and outdoor events based on 5 years of weather history.</p>
+    </header>
+
+    <div class="search-wrap">
+      <input
+        type="text"
+        id="locationInput"
+        placeholder="Search for a city (e.g. Paris, Dubai, Tokyo)..."
+        autocomplete="off"
+        aria-label="Search for a location"
+        aria-autocomplete="list"
+        aria-controls="autocomplete"
+      >
+      <div class="autocomplete" id="autocomplete" role="listbox"></div>
+    </div>
+
+    <div class="loading" id="loading" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Analyzing 5 years of weather data…</p>
+      <small>This may take a few seconds.</small>
+    </div>
+
+    <div class="results" id="results" role="region" aria-live="polite">
+      <div class="results-header">
+        <h2 id="resultsTitle"></h2>
+        <p id="resultsSubtitle"></p>
+        <p class="note" id="resultsNote"></p>
+      </div>
+      <div id="resultsList"></div>
+    </div>
+
+    <div class="empty-state" id="emptyState" aria-live="polite">
+      <div class="icon">🌧️</div>
+      <h3>No completely rain-free days found</h3>
+      <p id="emptyMessage"></p>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- DOM refs ---------- */
+    const locationInput = document.getElementById('locationInput');
+    const autocomplete = document.getElementById('autocomplete');
+    const loading = document.getElementById('loading');
+    const results = document.getElementById('results');
+    const resultsTitle = document.getElementById('resultsTitle');
+    const resultsSubtitle = document.getElementById('resultsSubtitle');
+    const resultsNote = document.getElementById('resultsNote');
+    const resultsList = document.getElementById('resultsList');
+    const emptyState = document.getElementById('emptyState');
+    const emptyMessage = document.getElementById('emptyMessage');
+
+    /* ---------- Constants ---------- */
+    const CURRENT_YEAR = new Date().getFullYear();
+    const NEXT_YEAR = CURRENT_YEAR + 1;
+    const MONTH_NAMES = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
+    ];
+    const WEEK_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    /* ---------- State ---------- */
+    let debounceTimer;
+    let selectedIndex = -1;
+    let currentSuggestions = [];
+
+    /* ---------- Events ---------- */
+    locationInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      selectedIndex = -1;
+      const query = e.target.value.trim();
+      if (query.length < 2) {
+        hideAutocomplete();
+        return;
+      }
+      debounceTimer = setTimeout(() => fetchSuggestions(query), 280);
+    });
+
+    locationInput.addEventListener('keydown', (e) => {
+      if (!currentSuggestions.length) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % currentSuggestions.length;
+        renderSuggestions();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + currentSuggestions.length) % currentSuggestions.length;
+        renderSuggestions();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIndex >= 0) {
+          selectLocation(currentSuggestions[selectedIndex]);
+        } else if (currentSuggestions.length === 1) {
+          selectLocation(currentSuggestions[0]);
+        }
+      } else if (e.key === 'Escape') {
+        hideAutocomplete();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-wrap')) hideAutocomplete();
+    });
+
+    /* ---------- Autocomplete ---------- */
+    async function fetchSuggestions(query) {
+      try {
+        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=en&format=json`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.results || data.results.length === 0) {
+          hideAutocomplete();
+          return;
+        }
+        currentSuggestions = data.results;
+        selectedIndex = -1;
+        renderSuggestions();
+      } catch (err) {
+        console.error('Geocoding error:', err);
+        hideAutocomplete();
+      }
+    }
+
+    function renderSuggestions() {
+      autocomplete.innerHTML = '';
+      currentSuggestions.forEach((place, idx) => {
+        const el = document.createElement('div');
+        el.className = 'autocomplete-item' + (idx === selectedIndex ? ' active' : '');
+        el.setAttribute('role', 'option');
+        el.setAttribute('aria-selected', idx === selectedIndex ? 'true' : 'false');
+        const parts = [place.name, place.admin1, place.country].filter(Boolean);
+        el.innerHTML = `
+          <div class="name">${escapeHtml(place.name)}</div>
+          <div class="meta">${escapeHtml(parts.slice(1).join(', '))}</div>
+        `;
+        el.addEventListener('click', () => selectLocation(place));
+        autocomplete.appendChild(el);
+      });
+      autocomplete.style.display = 'block';
+    }
+
+    function hideAutocomplete() {
+      autocomplete.style.display = 'none';
+      selectedIndex = -1;
+      currentSuggestions = [];
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    /* ---------- Main flow ---------- */
+    async function selectLocation(place) {
+      locationInput.value = [place.name, place.country].filter(Boolean).join(', ');
+      hideAutocomplete();
+
+      showLoading();
+      hideResults();
+      hideEmpty();
+
+      try {
+        const dryDays = await fetchAndAnalyze(place.latitude, place.longitude);
+        if (dryDays.length === 0) {
+          showEmpty(place);
+        } else {
+          showResults(dryDays, place);
+        }
+      } catch (err) {
+        console.error(err);
+        hideLoading();
+        alert('Unable to fetch weather data. Please check your connection and try again.');
+      }
+    }
+
+    async function fetchAndAnalyze(lat, lon) {
+      const startYear = CURRENT_YEAR - 5;
+      const startDate = `${startYear}-01-01`;
+      const endDate = `${CURRENT_YEAR - 1}-12-31`;
+      const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startDate}&end_date=${endDate}&daily=precipitation_sum&timezone=auto`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Weather API returned ' + res.status);
+      const data = await res.json();
+
+      const times = data.daily.time;           // ["2006-01-01", ...]
+      const precip = data.daily.precipitation_sum; // [0.0, 1.2, null, ...]
+
+      const dayStats = {}; // "MM-DD" -> { rainyCount }
+
+      for (let i = 0; i < times.length; i++) {
+        const [, month, day] = times[i].split('-');
+        const key = `${month}-${day}`;
+        if (!dayStats[key]) dayStats[key] = 0;
+
+        const val = precip[i];
+        // Count as a rainy occurrence only if there is a strictly positive amount.
+        // Missing values (null/undefined) are treated as dry — ERA5 reanalysis data is very complete.
+        if (val !== null && val !== undefined && val > 0) {
+          dayStats[key]++;
+        }
+      }
+
+      const dryDays = [];
+      for (const [key, rainyCount] of Object.entries(dayStats)) {
+        if (key === '02-29') continue; // skip leap day for practical event planning
+        if (rainyCount === 0) {
+          const [m, d] = key.split('-').map(Number);
+          dryDays.push({ month: m, day: d });
+        }
+      }
+
+      dryDays.sort((a, b) => (a.month - b.month) || (a.day - b.day));
+      return dryDays;
+    }
+
+    /* ---------- Helpers ---------- */
+    function getWeekday(year, month, day) {
+      const date = new Date(year, month - 1, day);
+      // Defensive: if date rolled over, the month won't match (only possible for Feb 29, which we skip)
+      if (date.getMonth() !== month - 1) return null;
+      return WEEK_DAYS[date.getDay()];
+    }
+
+    function ordinal(n) {
+      const s = ['th','st','nd','rd'];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function locationLabel(place) {
+      return [place.name, place.country].filter(Boolean).join(', ');
+    }
+
+    /* ---------- UI states ---------- */
+    function showLoading() { loading.classList.add('active'); }
+    function hideLoading() { loading.classList.remove('active'); }
+
+    function hideResults() {
+      results.classList.remove('active');
+      resultsList.innerHTML = '';
+    }
+
+    function hideEmpty() { emptyState.classList.remove('active'); }
+
+    function showResults(days, place) {
+      hideLoading();
+      const label = locationLabel(place);
+      resultsTitle.textContent = `${days.length} Perfect Day${days.length !== 1 ? 's' : ''} Found`;
+      resultsSubtitle.textContent = `In ${label}, these dates recorded zero rainfall across the past 5 years.`;
+      resultsNote.textContent = 'Rain is defined as any strictly positive precipitation amount.';
+
+      resultsList.innerHTML = '';
+      days.forEach((d, i) => {
+        const monthName = MONTH_NAMES[d.month - 1];
+        const thisYearDay = getWeekday(CURRENT_YEAR, d.month, d.day);
+        const nextYearDay = getWeekday(NEXT_YEAR, d.month, d.day);
+
+        const card = document.createElement('div');
+        card.className = 'day-card';
+        card.style.animationDelay = `${i * 0.04}s`;
+        card.innerHTML = `
+          <div class="date-title">
+            <span>☀️</span>
+            <span>${monthName} ${ordinal(d.day)}</span>
+          </div>
+          <div class="day-row">
+            <div class="day-col">
+              <div class="label">${CURRENT_YEAR}</div>
+              <div class="value">${thisYearDay}, ${monthName} ${d.day}, ${CURRENT_YEAR}</div>
+            </div>
+            <div class="day-col">
+              <div class="label">${NEXT_YEAR}</div>
+              <div class="value">${nextYearDay}, ${monthName} ${d.day}, ${NEXT_YEAR}</div>
+            </div>
+          </div>
+        `;
+        resultsList.appendChild(card);
+      });
+
+      results.classList.add('active');
+    }
+
+    function showEmpty(place) {
+      hideLoading();
+      const label = locationLabel(place);
+      emptyMessage.textContent = `We analyzed 5 years of weather history for ${label}. Every calendar day had at least some rainfall during that period, so there is no date where it never rained.`;
+      emptyState.classList.add('active');
+    }
+  </script>
+</body>
+</html>

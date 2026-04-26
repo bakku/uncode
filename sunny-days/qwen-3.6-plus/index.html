@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Best Day Finder — Plan Your Event Without Rain</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --color-bg: #f0f4f8;
+      --color-surface: #ffffff;
+      --color-primary: #2563eb;
+      --color-primary-hover: #1d4ed8;
+      --color-text: #1e293b;
+      --color-text-muted: #64748b;
+      --color-border: #e2e8f0;
+      --color-success: #059669;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #d97706;
+      --color-warning-bg: #fffbeb;
+      --color-error: #dc2626;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+      color: white;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      opacity: 0.9;
+      font-size: 1rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    .card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-section label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-wrapper input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      padding-right: 2.5rem;
+      border: 2px solid var(--color-border);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .search-wrapper input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .search-wrapper .clear-btn {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-text-muted);
+      font-size: 1.25rem;
+      padding: 0.25rem;
+      display: none;
+      line-height: 1;
+    }
+
+    .search-wrapper .clear-btn.visible {
+      display: block;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      margin-top: 4px;
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+      max-height: 250px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .autocomplete-list.visible {
+      display: block;
+    }
+
+    .autocomplete-item {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--color-border);
+      transition: background 0.15s;
+    }
+
+    .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+      background: #f1f5f9;
+    }
+
+    .autocomplete-item .name {
+      font-weight: 500;
+    }
+
+    .autocomplete-item .country {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+    }
+
+    .selected-location {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #eff6ff;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    .selected-location.visible {
+      display: flex;
+    }
+
+    .selected-location .remove-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-text-muted);
+      font-size: 1.1rem;
+      padding: 0.25rem;
+    }
+
+    .year-selector {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .year-selector label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .year-selector select {
+      padding: 0.5rem 0.75rem;
+      border: 2px solid var(--color-border);
+      border-radius: 8px;
+      font-size: 1rem;
+      background: var(--color-surface);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .year-selector select:focus {
+      border-color: var(--color-primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 1rem;
+      width: 100%;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--color-primary-hover);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .progress-section {
+      display: none;
+    }
+
+    .progress-section.visible {
+      display: block;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: var(--color-border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0 0.5rem;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--color-primary);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .progress-text {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+    }
+
+    .results-section {
+      display: none;
+    }
+
+    .results-section.visible {
+      display: block;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .results-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: var(--color-success-bg);
+      color: var(--color-success);
+    }
+
+    .badge-warning {
+      background: var(--color-warning-bg);
+      color: var(--color-warning);
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .day-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 1rem;
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+
+    .day-card:hover {
+      box-shadow: var(--shadow);
+      transform: translateY(-2px);
+    }
+
+    .day-card .date {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .day-card .weekdays {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+    }
+
+    .day-card .weekdays span {
+      display: block;
+    }
+
+    .day-card .streak {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--color-success);
+      font-weight: 500;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    .no-results .icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .no-results h3 {
+      font-size: 1.15rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .no-results p {
+      color: var(--color-text-muted);
+      font-size: 0.95rem;
+    }
+
+    .error-message {
+      display: none;
+      padding: 1rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: var(--color-error);
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .error-message.visible {
+      display: block;
+    }
+
+    .info-box {
+      display: flex;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      margin-top: 1rem;
+    }
+
+    .info-box .icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .month-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .month-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .month-group h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .view-toggle button {
+      padding: 0.5rem 1rem;
+      border: 2px solid var(--color-border);
+      background: var(--color-surface);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .view-toggle button.active {
+      border-color: var(--color-primary);
+      background: #eff6ff;
+      color: var(--color-primary);
+    }
+
+    .calendar-view {
+      display: none;
+    }
+
+    .calendar-view.visible {
+      display: block;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .calendar-month {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+
+    .calendar-month h4 {
+      text-align: center;
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      color: var(--color-text-muted);
+    }
+
+    .calendar-days-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      border-radius: 4px;
+    }
+
+    .calendar-day.safe {
+      background: var(--color-success-bg);
+      color: var(--color-success);
+      font-weight: 600;
+    }
+
+    .calendar-day.rainy {
+      color: var(--color-text-muted);
+    }
+
+    .legend {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .legend-dot.safe {
+      background: var(--color-success-bg);
+      border: 1px solid var(--color-success);
+    }
+
+    .legend-dot.rainy {
+      background: var(--color-border);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      header h1 {
+        font-size: 1.4rem;
+      }
+
+      header p {
+        font-size: 0.9rem;
+      }
+
+      .card {
+        padding: 1rem;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .calendar-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Best Day Finder</h1>
+    <p>Find the driest days of the year for your outdoor event based on 5 years of historical weather data.</p>
+  </header>
+
+  <main>
+    <div class="card search-section">
+      <label for="location-input">Where are you planning your event?</label>
+      <div class="search-wrapper">
+        <input
+          type="text"
+          id="location-input"
+          placeholder="Search for a city or place..."
+          autocomplete="off"
+        />
+        <button class="clear-btn" id="clear-btn" title="Clear">&times;</button>
+        <div class="autocomplete-list" id="autocomplete-list"></div>
+      </div>
+
+      <div class="selected-location" id="selected-location">
+        <span class="icon">&#x1F4CD;</span>
+        <span class="text" id="selected-location-text"></span>
+        <button class="remove-btn" id="remove-location-btn" title="Remove">&times;</button>
+      </div>
+
+      <div class="year-selector">
+        <label for="year-select">Show weekdays for:</label>
+        <select id="year-select"></select>
+      </div>
+
+      <button class="btn" id="search-btn" disabled>
+        <span class="btn-text">Find Best Days</span>
+      </button>
+
+      <div class="error-message" id="error-message"></div>
+    </div>
+
+    <div class="card progress-section" id="progress-section">
+      <div class="progress-text" id="progress-text">Fetching weather data...</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+
+    <div class="card results-section" id="results-section">
+      <div class="results-header">
+        <h2 id="results-title">Best Days</h2>
+        <span class="badge" id="results-badge"></span>
+      </div>
+
+      <div class="view-toggle" id="view-toggle">
+        <button class="active" data-view="list">List View</button>
+        <button data-view="calendar">Calendar View</button>
+      </div>
+
+      <div id="list-view">
+        <div id="results-content"></div>
+      </div>
+
+      <div class="calendar-view" id="calendar-view">
+        <div class="calendar-grid" id="calendar-grid"></div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot safe"></div>
+            <span>No rain in 20 years</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot rainy"></div>
+            <span>Rain occurred</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <span class="icon">&#x2139;&#xFE0F;</span>
+        <span>Data from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>. Rain is defined as precipitation &gt; 0 mm. Historical data covers the last 5 years.</span>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Powered by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo API</a>. No account required.
+  </footer>
+
+  <script>
+    (function() {
+      'use strict';
+
+      const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
+      const WEATHER_URL = 'https://archive-api.open-meteo.com/v1/archive';
+
+      const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      let selectedLocation = null;
+      let autocompleteTimeout = null;
+      let activeAutocompleteIndex = -1;
+      let autocompleteResults = [];
+      let lastSafeDays = [];
+      let lastTotalYears = 0;
+
+      const locationInput = document.getElementById('location-input');
+      const clearBtn = document.getElementById('clear-btn');
+      const autocompleteList = document.getElementById('autocomplete-list');
+      const selectedLocationEl = document.getElementById('selected-location');
+      const selectedLocationText = document.getElementById('selected-location-text');
+      const removeLocationBtn = document.getElementById('remove-location-btn');
+      const yearSelect = document.getElementById('year-select');
+      const searchBtn = document.getElementById('search-btn');
+      const errorMessage = document.getElementById('error-message');
+      const progressSection = document.getElementById('progress-section');
+      const progressText = document.getElementById('progress-text');
+      const progressBar = document.getElementById('progress-bar');
+      const resultsSection = document.getElementById('results-section');
+      const resultsTitle = document.getElementById('results-title');
+      const resultsBadge = document.getElementById('results-badge');
+      const resultsContent = document.getElementById('results-content');
+      const viewToggle = document.getElementById('view-toggle');
+      const listView = document.getElementById('list-view');
+      const calendarView = document.getElementById('calendar-view');
+      const calendarGrid = document.getElementById('calendar-grid');
+
+      function initYearSelector() {
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear; y <= currentYear + 2; y++) {
+          const opt = document.createElement('option');
+          opt.value = y;
+          opt.textContent = y;
+          if (y === currentYear + 1) opt.selected = true;
+          yearSelect.appendChild(opt);
+        }
+      }
+
+      locationInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        clearBtn.classList.toggle('visible', query.length > 0);
+
+        if (query.length < 3) {
+          hideAutocomplete();
+          return;
+        }
+
+        clearTimeout(autocompleteTimeout);
+        activeAutocompleteIndex = -1;
+
+        autocompleteTimeout = setTimeout(() => fetchLocations(query), 300);
+      });
+
+      locationInput.addEventListener('keydown', function(e) {
+        if (!autocompleteList.classList.contains('visible')) return;
+
+        const items = autocompleteList.querySelectorAll('.autocomplete-item');
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          activeAutocompleteIndex = Math.min(activeAutocompleteIndex + 1, items.length - 1);
+          updateAutocompleteHighlight(items);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          activeAutocompleteIndex = Math.max(activeAutocompleteIndex - 1, 0);
+          updateAutocompleteHighlight(items);
+        } else if (e.key === 'Enter' && activeAutocompleteIndex >= 0) {
+          e.preventDefault();
+          selectLocation(autocompleteResults[activeAutocompleteIndex]);
+        } else if (e.key === 'Escape') {
+          hideAutocomplete();
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-wrapper')) {
+          hideAutocomplete();
+        }
+      });
+
+      clearBtn.addEventListener('click', function() {
+        locationInput.value = '';
+        clearBtn.classList.remove('visible');
+        hideAutocomplete();
+        locationInput.focus();
+      });
+
+      removeLocationBtn.addEventListener('click', function() {
+        selectedLocation = null;
+        selectedLocationEl.classList.remove('visible');
+        locationInput.value = '';
+        locationInput.disabled = false;
+        clearBtn.classList.remove('visible');
+        searchBtn.disabled = true;
+        resultsSection.classList.remove('visible');
+        locationInput.focus();
+      });
+
+      searchBtn.addEventListener('click', analyzeWeather);
+
+      viewToggle.addEventListener('click', function(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const view = btn.dataset.view;
+        viewToggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (view === 'list') {
+          listView.style.display = 'block';
+          calendarView.classList.remove('visible');
+        } else {
+          listView.style.display = 'none';
+          calendarView.classList.add('visible');
+        }
+      });
+
+      yearSelect.addEventListener('change', function() {
+        if (resultsSection.classList.contains('visible') && lastSafeDays.length > 0) {
+          renderResults(lastSafeDays, lastTotalYears);
+        }
+      });
+
+      function updateAutocompleteHighlight(items) {
+        items.forEach((item, i) => {
+          item.classList.toggle('active', i === activeAutocompleteIndex);
+        });
+      }
+
+      async function fetchLocations(query) {
+        try {
+          const resp = await fetch(`${GEOCODING_URL}?name=${encodeURIComponent(query)}&count=6&language=en&format=json`);
+          if (!resp.ok) throw new Error('Geocoding request failed');
+          const data = await resp.json();
+
+          if (!data.results || data.results.length === 0) {
+            showAutocomplete([{ name: 'No results found', country: '' }], true);
+            return;
+          }
+
+          autocompleteResults = data.results;
+          showAutocomplete(data.results.map(r => ({
+            name: [r.name, r.admin1, r.admin2].filter(Boolean).join(', '),
+            country: r.country || '',
+            latitude: r.latitude,
+            longitude: r.longitude,
+          })));
+        } catch (err) {
+          console.error('Geocoding error:', err);
+        }
+      }
+
+      function showAutocomplete(items, isEmpty) {
+        autocompleteList.innerHTML = '';
+        items.forEach((item, i) => {
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          div.innerHTML = `<div class="name">${escapeHtml(item.name)}</div>
+                           ${item.country ? `<div class="country">${escapeHtml(item.country)}</div>` : ''}`;
+          if (isEmpty) {
+            div.style.cursor = 'default';
+            div.style.color = 'var(--color-text-muted)';
+          } else {
+            div.addEventListener('click', () => selectLocation(autocompleteResults[i]));
+          }
+          autocompleteList.appendChild(div);
+        });
+        autocompleteList.classList.add('visible');
+        activeAutocompleteIndex = -1;
+      }
+
+      function hideAutocomplete() {
+        autocompleteList.classList.remove('visible');
+        autocompleteResults = [];
+        activeAutocompleteIndex = -1;
+      }
+
+      function selectLocation(loc) {
+        selectedLocation = loc;
+        const displayName = [loc.name, loc.country].filter(Boolean).join(', ');
+        selectedLocationText.textContent = displayName;
+        selectedLocationEl.classList.add('visible');
+        locationInput.disabled = true;
+        hideAutocomplete();
+        searchBtn.disabled = false;
+        resultsSection.classList.remove('visible');
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      async function analyzeWeather() {
+        if (!selectedLocation) return;
+
+        searchBtn.disabled = true;
+        searchBtn.innerHTML = '<span class="spinner"></span><span class="btn-text">Analyzing...</span>';
+        errorMessage.classList.remove('visible');
+        resultsSection.classList.remove('visible');
+        progressSection.classList.add('visible');
+        progressBar.style.width = '0%';
+        progressText.textContent = 'Starting analysis...';
+
+        const currentYear = new Date().getFullYear();
+        const startYear = currentYear - 5;
+        const endYear = currentYear - 1;
+        const totalYears = endYear - startYear + 1;
+
+        const dayRainCount = {};
+        const dayStreak = {};
+
+        try {
+          for (let year = startYear; year <= endYear; year++) {
+            const progress = ((year - startYear) / totalYears) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `Fetching data for ${year}... (${year - startYear + 1}/${totalYears})`;
+
+            const data = await fetchYearData(selectedLocation.latitude, selectedLocation.longitude, year);
+            if (!data) continue;
+
+            const precipitation = data.daily?.precipitation_sum;
+            const time = data.daily?.time;
+            if (!precipitation || !time) continue;
+
+            for (let i = 0; i < time.length; i++) {
+              const dateStr = time[i];
+              const key = dateStr.substring(5);
+              if (!(key in dayRainCount)) {
+                dayRainCount[key] = 0;
+                dayStreak[key] = 0;
+              }
+              if (precipitation[i] > 0) {
+                dayRainCount[key]++;
+                dayStreak[key] = 0;
+              } else {
+                dayStreak[key]++;
+              }
+            }
+          }
+
+          progressBar.style.width = '100%';
+          progressText.textContent = 'Analysis complete!';
+
+          const safeDays = [];
+          for (const key in dayRainCount) {
+            if (dayRainCount[key] === 0) {
+              safeDays.push({ dateKey: key, streak: dayStreak[key] });
+            }
+          }
+
+          setTimeout(() => {
+            progressSection.classList.remove('visible');
+            lastSafeDays = safeDays;
+            lastTotalYears = totalYears;
+            renderResults(safeDays, totalYears);
+          }, 500);
+
+        } catch (err) {
+          console.error('Weather analysis error:', err);
+          progressSection.classList.remove('visible');
+          showError('Failed to fetch weather data. Please try again later.');
+        } finally {
+          searchBtn.disabled = false;
+          searchBtn.innerHTML = '<span class="btn-text">Find Best Days</span>';
+        }
+      }
+
+      async function fetchYearData(lat, lon, year) {
+        const url = `${WEATHER_URL}?latitude=${lat}&longitude=${lon}&start_date=${year}-01-01&end_date=${year}-12-31&daily=precipitation_sum&timezone=auto`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`Failed to fetch data for ${year}`);
+        return resp.json();
+      }
+
+      function renderResults(safeDays, totalYears) {
+        resultsSection.classList.add('visible');
+
+        const selectedYear = parseInt(yearSelect.value);
+        const displayYear1 = selectedYear;
+        const displayYear2 = selectedYear + 1;
+
+        resultsTitle.textContent = `Best Days for ${selectedLocation.name}`;
+
+        if (safeDays.length === 0) {
+          resultsBadge.className = 'badge badge-warning';
+          resultsBadge.textContent = `${totalYears} years analyzed`;
+          resultsContent.innerHTML = `
+            <div class="no-results">
+              <div class="icon">&#x1F327;&#xFE0F;</div>
+              <h3>No completely rain-free days found</h3>
+              <p>In the last ${totalYears} years, it has rained at least once on every day of the year at this location. Consider checking nearby locations or being prepared with a backup plan.</p>
+            </div>
+          `;
+          calendarGrid.innerHTML = '';
+          return;
+        }
+
+        resultsBadge.className = 'badge badge-success';
+        resultsBadge.textContent = `${safeDays.length} dry day${safeDays.length !== 1 ? 's' : ''} found`;
+
+        safeDays.sort((a, b) => b.streak - a.streak || a.dateKey.localeCompare(b.dateKey));
+
+        let listHtml = '';
+        let currentMonth = -1;
+
+        safeDays.forEach(({ dateKey, streak }) => {
+          const [monthStr, dayStr] = dateKey.split('-');
+          const month = parseInt(monthStr) - 1;
+          const day = parseInt(dayStr);
+
+          if (month !== currentMonth) {
+            if (currentMonth !== -1) listHtml += '</div>';
+            currentMonth = month;
+            listHtml += `<div class="month-group"><h3>${MONTHS[month]}</h3><div class="results-grid">`;
+          }
+
+          const dateStr = `${MONTHS[month]} ${day}`;
+          const date1 = new Date(displayYear1, month, day);
+          const date2 = new Date(displayYear2, month, day);
+          const weekday1 = WEEKDAYS[date1.getDay()];
+          const weekday2 = WEEKDAYS[date2.getDay()];
+
+          listHtml += `
+            <div class="day-card">
+              <div class="date">${dateStr}</div>
+              <div class="weekdays">
+                <span>${displayYear1}: ${weekday1}</span>
+                <span>${displayYear2}: ${weekday2}</span>
+              </div>
+              <div class="streak">${streak} consecutive dry year${streak !== 1 ? 's' : ''}</div>
+            </div>
+          `;
+        });
+
+        if (safeDays.length > 0) listHtml += '</div></div>';
+        resultsContent.innerHTML = listHtml;
+
+        renderCalendar(safeDays);
+      }
+
+      function renderCalendar(safeDays) {
+        const currentYear = new Date().getFullYear();
+        const safeSet = new Set(safeDays.map(d => d.dateKey));
+        calendarGrid.innerHTML = '';
+
+        for (let month = 0; month < 12; month++) {
+          const monthDiv = document.createElement('div');
+          monthDiv.className = 'calendar-month';
+
+          const firstDay = new Date(currentYear, month, 1);
+          const lastDay = new Date(currentYear, month + 1, 0);
+          const startWeekday = firstDay.getDay();
+          const daysInMonth = lastDay.getDate();
+
+          let html = `<h4>${MONTHS[month]}</h4>`;
+          html += '<div class="calendar-days-header">';
+          WEEKDAYS_SHORT.forEach(d => { html += `<div>${d}</div>`; });
+          html += '</div><div class="calendar-days">';
+
+          for (let i = 0; i < startWeekday; i++) {
+            html += '<div class="calendar-day"></div>';
+          }
+
+          for (let day = 1; day <= daysInMonth; day++) {
+            const dateKey = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isSafe = safeSet.has(dateKey);
+            html += `<div class="calendar-day ${isSafe ? 'safe' : 'rainy'}">${day}</div>`;
+          }
+
+          html += '</div>';
+          monthDiv.innerHTML = html;
+          calendarGrid.appendChild(monthDiv);
+        }
+      }
+
+      function showError(msg) {
+        errorMessage.textContent = msg;
+        errorMessage.classList.add('visible');
+      }
+
+      initYearSelector();
+    })();
+  </script>
+</body>
+</html>

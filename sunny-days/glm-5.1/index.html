@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunny Days</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sun:#f6a623;--sun-light:#fde68a;--sky:#e0f2fe;--sky-dark:#0284c7;
+  --text:#1e293b;--text-light:#64748b;--card:#fff;--border:#e2e8f0;
+  --perfect:#16a34a;--perfect-bg:#f0fdf4;--nearly:#ca8a04;--nearly-bg:#fefce8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 14px rgba(0,0,0,.06);
+}
+html{font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;color:var(--text);min-height:100vh;background:linear-gradient(160deg,#fef9c3 0%,#e0f2fe 40%,#f0f9ff 100%)}
+.container{max-width:800px;margin:0 auto;padding:1.25rem 1rem 3rem}
+header{text-align:center;padding:2.5rem 0 1.5rem}
+header h1{font-size:2.25rem;font-weight:800;letter-spacing:-.02em;color:var(--sky-dark)}
+header h1 span{color:var(--sun)}
+header p{margin-top:.35rem;color:var(--text-light);font-size:1rem}
+.search-wrapper{position:relative;margin-top:1.5rem}
+.search-wrapper input{width:100%;padding:.85rem 1rem .85rem 2.75rem;border:2px solid var(--border);border-radius:var(--radius);font-size:1rem;background:var(--card);outline:none;transition:border-color .2s,box-shadow .2s}
+.search-wrapper input:focus{border-color:var(--sun);box-shadow:0 0 0 3px rgba(246,166,35,.15)}
+.search-icon{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--text-light);pointer-events:none}
+.clear-btn{position:absolute;right:.5rem;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1.25rem;color:var(--text-light);cursor:pointer;line-height:1;padding:.25rem;border-radius:50%;transition:background .15s}
+.clear-btn:hover{background:var(--border)}
+.suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);z-index:100;max-height:280px;overflow-y:auto;display:none}
+.suggestions.active{display:block}
+.suggestion-item{padding:.7rem 1rem;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border);font-size:.95rem}
+.suggestion-item:last-child{border-bottom:none}
+.suggestion-item:hover,.suggestion-item.focused{background:var(--sky)}
+.suggestion-item .sub{color:var(--text-light);font-size:.82rem;margin-top:.15rem}
+.loading{text-align:center;padding:3rem 0;display:none}
+.loading.active{display:block}
+.spinner{width:48px;height:48px;margin:0 auto 1rem;border:4px solid var(--border);border-top-color:var(--sun);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:var(--text-light);font-size:.95rem}
+.results{display:none}
+.results.active{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.results-header{margin-top:1.75rem}
+.results-header h2{font-size:1.35rem;font-weight:700}
+.results-header .sub{color:var(--text-light);font-size:.9rem;margin-top:.2rem}
+.section{margin-top:1.5rem}
+.section h3{font-size:1.05rem;font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem}
+.section h3 .badge{font-size:.7rem;font-weight:600;padding:.15rem .55rem;border-radius:9999px;color:#fff}
+.badge-perfect{background:var(--perfect)}
+.badge-nearly{background:var(--nearly)}
+.days-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem}
+.day-card{background:var(--card);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow);border-left:4px solid;transition:transform .15s}
+.day-card:hover{transform:translateY(-2px)}
+.day-card.perfect{border-left-color:var(--perfect);background:var(--perfect-bg)}
+.day-card.nearly{border-left-color:var(--nearly);background:var(--nearly-bg)}
+.day-date{font-weight:700;font-size:1.05rem}
+.day-details{margin-top:.5rem;display:flex;flex-direction:column;gap:.2rem;font-size:.88rem;color:var(--text)}
+.day-details span{display:flex;align-items:center;gap:.35rem}
+.day-details .label{color:var(--text-light);min-width:2.5rem}
+.day-stats{margin-top:.45rem;font-size:.78rem;color:var(--text-light)}
+.no-results{text-align:center;padding:3rem 1rem;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:1.5rem}
+.no-results .icon{font-size:2.5rem;margin-bottom:.5rem}
+.no-results h3{font-size:1.15rem;margin-bottom:.5rem}
+.no-results p{color:var(--text-light);font-size:.92rem;max-width:480px;margin:0 auto}
+.error{text-align:center;padding:2rem;background:#fef2f2;border-radius:var(--radius);color:#dc2626;display:none;margin-top:1.5rem}
+.error.active{display:block;animation:fadeUp .3s ease}
+footer{text-align:center;margin-top:3rem;padding:1rem 0;color:var(--text-light);font-size:.82rem}
+footer a{color:var(--sky-dark);text-decoration:none}
+footer a:hover{text-decoration:underline}
+@media(max-width:480px){
+  .container{padding:1rem .75rem 2rem}
+  header h1{font-size:1.75rem}
+  .days-grid{grid-template-columns:1fr}
+  .day-card{padding:.85rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Sunny <span>Days</span></h1>
+    <p>Find the least likely days for rain at any location</p>
+  </header>
+
+  <div class="search-wrapper">
+    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="locationInput" placeholder="Search for a city or location..." autocomplete="off" aria-label="Search for a location">
+    <button class="clear-btn" id="clearBtn" aria-label="Clear search" style="display:none">&times;</button>
+    <div class="suggestions" id="suggestions" role="listbox"></div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p id="loadingText">Analyzing 5 years of weather data...</p>
+  </div>
+
+  <div class="error" id="error"></div>
+
+  <div class="results" id="results"></div>
+
+  <footer>Data provided by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></footer>
+</div>
+
+<script>
+(function() {
+  var GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
+  var ARCHIVE_URL = 'https://archive-api.open-meteo.com/v1/archive';
+
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  var locationInput = document.getElementById('locationInput');
+  var clearBtn = document.getElementById('clearBtn');
+  var suggestionsEl = document.getElementById('suggestions');
+  var loadingEl = document.getElementById('loading');
+  var loadingText = document.getElementById('loadingText');
+  var resultsEl = document.getElementById('results');
+  var errorEl = document.getElementById('error');
+
+  var debounceTimer = null;
+  var selectedLocation = null;
+  var currentRequest = null;
+
+  locationInput.addEventListener('input', function() {
+    var q = this.value.trim();
+    clearBtn.style.display = q ? 'block' : 'none';
+    clearTimeout(debounceTimer);
+    if (q.length < 2) {
+      suggestionsEl.classList.remove('active');
+      suggestionsEl.innerHTML = '';
+      return;
+    }
+    debounceTimer = setTimeout(function() { searchLocation(q); }, 300);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    locationInput.value = '';
+    clearBtn.style.display = 'none';
+    suggestionsEl.classList.remove('active');
+    selectedLocation = null;
+    resultsEl.classList.remove('active');
+    resultsEl.innerHTML = '';
+    errorEl.classList.remove('active');
+    locationInput.focus();
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-wrapper')) {
+      suggestionsEl.classList.remove('active');
+    }
+  });
+
+  locationInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      suggestionsEl.classList.remove('active');
+    }
+    var items = suggestionsEl.querySelectorAll('.suggestion-item:not(.no-results)');
+    var focused = suggestionsEl.querySelector('.suggestion-item.focused');
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      var idx = -1;
+      items.forEach(function(item, i) { if (item === focused) idx = i; });
+      if (focused) focused.classList.remove('focused');
+      if (e.key === 'ArrowDown') idx = (idx + 1) % items.length;
+      else idx = idx <= 0 ? items.length - 1 : idx - 1;
+      items[idx].classList.add('focused');
+      items[idx].scrollIntoView({ block: 'nearest' });
+    }
+    if (e.key === 'Enter' && focused) {
+      focused.click();
+    }
+  });
+
+  async function searchLocation(query) {
+    try {
+      var url = GEOCODING_URL + '?name=' + encodeURIComponent(query) + '&count=8&language=en&format=json';
+      var res = await fetch(url);
+      var data = await res.json();
+      if (!data.results || data.results.length === 0) {
+        suggestionsEl.innerHTML = '<div class="suggestion-item no-results" style="color:var(--text-light);cursor:default">No locations found</div>';
+        suggestionsEl.classList.add('active');
+        return;
+      }
+      suggestionsEl.innerHTML = data.results.map(function(loc, i) {
+        var label = loc.name;
+        var sub = [loc.admin1, loc.country].filter(Boolean).join(', ');
+        return '<div class="suggestion-item" role="option" data-idx="' + i + '">' +
+          '<div>' + escHtml(label) + '</div>' +
+          (sub ? '<div class="sub">' + escHtml(sub) + '</div>' : '') +
+        '</div>';
+      }).join('');
+      suggestionsEl.classList.add('active');
+
+      var results = data.results;
+      suggestionsEl.querySelectorAll('.suggestion-item[data-idx]').forEach(function(el) {
+        el.addEventListener('click', function() {
+          var idx = parseInt(this.dataset.idx);
+          var loc = results[idx];
+          selectedLocation = {
+            name: loc.name,
+            country: loc.country || '',
+            admin1: loc.admin1 || '',
+            latitude: loc.latitude,
+            longitude: loc.longitude
+          };
+          var display = loc.name + (loc.admin1 ? ', ' + loc.admin1 : '') + ', ' + (loc.country || '');
+          locationInput.value = display;
+          suggestionsEl.classList.remove('active');
+          fetchWeatherData();
+        });
+      });
+    } catch (err) {
+      console.error('Geocoding error:', err);
+    }
+  }
+
+  async function fetchWeatherData() {
+    if (!selectedLocation) return;
+
+    showLoading();
+    hideError();
+    resultsEl.classList.remove('active');
+    resultsEl.innerHTML = '';
+
+    var now = new Date();
+    var currentYear = now.getFullYear();
+    var startYear = currentYear - 5;
+    var endYear = currentYear - 1;
+
+    try {
+      loadingText.textContent = 'Fetching weather data from Open-Meteo...';
+
+      var chunks = [];
+      var chunkSize = 10;
+      for (var sy = startYear; sy <= endYear; sy += chunkSize) {
+        var ey = Math.min(sy + chunkSize - 1, endYear);
+        chunks.push({ start: sy + '-01-01', end: ey + '-12-31' });
+      }
+
+      var allTimes = [];
+      var allPrecip = [];
+      var totalChunks = chunks.length;
+
+      for (var ci = 0; ci < chunks.length; ci++) {
+        loadingText.textContent = 'Fetching weather data (' + (ci + 1) + '/' + totalChunks + ')...';
+        var chunk = chunks[ci];
+        var url = ARCHIVE_URL +
+          '?latitude=' + selectedLocation.latitude +
+          '&longitude=' + selectedLocation.longitude +
+          '&start_date=' + chunk.start +
+          '&end_date=' + chunk.end +
+          '&daily=precipitation_sum&timezone=auto';
+
+        var res = await fetch(url);
+        if (!res.ok) throw new Error('API returned ' + res.status);
+        var data = await res.json();
+        if (!data.daily || !data.daily.time) throw new Error('Unexpected API response');
+
+        allTimes = allTimes.concat(data.daily.time);
+        allPrecip = allPrecip.concat(data.daily.precipitation_sum);
+      }
+
+      loadingText.textContent = 'Analyzing rainfall patterns...';
+      await new Promise(function(r) { setTimeout(r, 100); });
+
+      processWeatherData(allTimes, allPrecip, currentYear, startYear, endYear);
+    } catch (err) {
+      console.error('Weather data error:', err);
+      showError('Failed to fetch weather data. Please check your connection and try again.');
+      hideLoading();
+    }
+  }
+
+  function processWeatherData(times, precipitation, currentYear, startYear, endYear) {
+    var dayMap = {};
+    var totalYears = endYear - startYear + 1;
+
+    for (var i = 0; i < times.length; i++) {
+      var parts = times[i].split('-');
+      var month = parseInt(parts[1], 10);
+      var day = parseInt(parts[2], 10);
+      var key = month + '-' + day;
+      if (!dayMap[key]) dayMap[key] = { month: month, day: day, values: [] };
+      dayMap[key].values.push(precipitation[i]);
+    }
+
+    var perfectDays = [];
+    var topDays = [];
+
+    for (var key in dayMap) {
+      var entry = dayMap[key];
+      var validValues = entry.values.filter(function(v) { return v !== null && v !== undefined; });
+      var dryCount = validValues.filter(function(v) { return v === 0; }).length;
+      var rainyCount = validValues.filter(function(v) { return v > 0; }).length;
+      var nullCount = entry.values.length - validValues.length;
+
+      var record = {
+        month: entry.month,
+        day: entry.day,
+        totalYears: entry.values.length,
+        validYears: validValues.length,
+        dryYears: dryCount,
+        rainyYears: rainyCount,
+        nullYears: nullCount,
+        dryPercent: validValues.length > 0 ? Math.round(dryCount / validValues.length * 100) : 0
+      };
+
+      var qualifies = validValues.length === entry.values.length && rainyCount === 0;
+      if (qualifies) {
+        perfectDays.push(record);
+      }
+      topDays.push(record);
+    }
+
+    topDays.sort(function(a, b) {
+      if (a.rainyYears !== b.rainyYears) return a.rainyYears - b.rainyYears;
+      if (a.dryPercent !== b.dryPercent) return b.dryPercent - a.dryPercent;
+      return a.month * 100 + a.day - (b.month * 100 + b.day);
+    });
+    perfectDays.sort(function(a, b) { return a.month * 100 + a.day - (b.month * 100 + b.day); });
+
+    var html = '';
+    var locationLabel = selectedLocation.name;
+    if (selectedLocation.admin1) locationLabel += ', ' + selectedLocation.admin1;
+    if (selectedLocation.country) locationLabel += ', ' + selectedLocation.country;
+
+    html += '<div class="results-header">';
+    html += '<h2>' + escHtml(locationLabel) + '</h2>';
+    html += '<p class="sub">' + startYear + ' \u2013 ' + endYear + ' (' + totalYears + ' years of data)</p>';
+    html += '</div>';
+
+    if (perfectDays.length > 0) {
+      html += '<div class="section">';
+      html += '<h3>Rain-Free Days <span class="badge badge-perfect">' + perfectDays.length + '</span></h3>';
+      html += '<p style="color:var(--text-light);font-size:.88rem;margin-bottom:.75rem">These days had zero precipitation across all ' + totalYears + ' years.</p>';
+      html += '<div class="days-grid">';
+      for (var i = 0; i < perfectDays.length; i++) {
+        html += renderDayCard(perfectDays[i], currentYear, true);
+      }
+      html += '</div></div>';
+    } else {
+      html += '<div class="no-results">';
+      html += '<div class="icon">\u2601\ufe0f</div>';
+      html += '<h3>No completely rain-free days found</h3>';
+      html += '<p>Every day of the year has experienced at least some precipitation between ' + startYear + ' and ' + endYear + ' at this location. Check the driest days below.</p>';
+      html += '</div>';
+    }
+
+    var topN = topDays.slice(0, 20);
+    if (perfectDays.length === 0 && topN.length > 0) {
+      html += '<div class="section">';
+      html += '<h3>Driest Days <span class="badge badge-nearly">Top 20</span></h3>';
+      html += '<p style="color:var(--text-light);font-size:.88rem;margin-bottom:.75rem">Days with the fewest rainy years out of ' + totalYears + '.</p>';
+      html += '<div class="days-grid">';
+      for (var i = 0; i < topN.length; i++) {
+        html += renderDayCard(topN[i], currentYear, false);
+      }
+      html += '</div></div>';
+    }
+
+    resultsEl.innerHTML = html;
+    resultsEl.classList.add('active');
+    hideLoading();
+  }
+
+  function renderDayCard(record, currentYear, isPerfect) {
+    var dateStr = MONTHS[record.month - 1] + ' ' + record.day;
+    var wdCurrent = WEEKDAYS[new Date(currentYear, record.month - 1, record.day).getDay()];
+    var wdNext = WEEKDAYS[new Date(currentYear + 1, record.month - 1, record.day).getDay()];
+    var cls = isPerfect ? 'perfect' : 'nearly';
+
+    var s = '<div class="day-card ' + cls + '">';
+    s += '<div class="day-date">' + dateStr + '</div>';
+    s += '<div class="day-details">';
+    s += '<span><span class="label">' + currentYear + ':</span> ' + wdCurrent + '</span>';
+    s += '<span><span class="label">' + (currentYear + 1) + ':</span> ' + wdNext + '</span>';
+    s += '</div>';
+    if (isPerfect) {
+      s += '<div class="day-stats">' + record.validYears + ' of ' + record.totalYears + ' years dry (100%)</div>';
+    } else {
+      s += '<div class="day-stats">' + record.dryYears + ' of ' + record.validYears + ' years dry (' + record.dryPercent + '%) &middot; rained ' + record.rainyYears + ' year' + (record.rainyYears !== 1 ? 's' : '') + '</div>';
+    }
+    s += '</div>';
+    return s;
+  }
+
+  function escHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  function showLoading() { loadingEl.classList.add('active'); }
+  function hideLoading() { loadingEl.classList.remove('active'); }
+  function showError(msg) { errorEl.textContent = msg; errorEl.classList.add('active'); }
+  function hideError() { errorEl.classList.remove('active'); }
+})();
+</script>
+</body>
+</html>
