@@ -1,4 +1,4 @@
-# Uncode
+# uncode
 
 This repo consists of mostly AI generated projects, where I'm not really caring much about the code.
 
