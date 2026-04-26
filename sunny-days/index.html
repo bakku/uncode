@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rain-Free Day Finder</title>
+<style>
+:root {
+  --bg: #f4f6f9;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #5a5a7a;
+  --accent: #2e7d32;
+  --accent-light: #e8f5e9;
+  --blue: #1565c0;
+  --blue-light: #e3f2fd;
+  --warning: #e65100;
+  --warning-light: #fff3e0;
+  --border: #e0e0e0;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.2s ease;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+header {
+  text-align: center;
+  padding: 48px 0 32px;
+}
+header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+header p {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+}
+
+/* Search */
+.search-section {
+  position: relative;
+  margin-bottom: 24px;
+}
+.search-wrapper {
+  position: relative;
+}
+.search-input {
+  width: 100%;
+  padding: 14px 48px 14px 20px;
+  font-size: 1.075rem;
+  font-family: var(--font);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
+}
+.search-input::placeholder {
+  color: #aaa;
+}
+.search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: #999;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: none;
+  line-height: 1;
+}
+.search-clear.visible {
+  display: block;
+}
+.search-clear:hover {
+  color: #555;
+  background: #f0f0f0;
+}
+
+/* Autocomplete dropdown */
+.autocomplete {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  max-height: 280px;
+  overflow-y: auto;
+  display: none;
+}
+.autocomplete.open {
+  display: block;
+}
+.autocomplete-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: background var(--transition);
+}
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+.autocomplete-item:hover,
+.autocomplete-item.active {
+  background: var(--accent-light);
+}
+.autocomplete-item .city-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.autocomplete-item .city-detail {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.autocomplete-item .coords {
+  font-size: 0.7rem;
+  color: #aaa;
+  font-family: var(--font-mono);
+}
+
+/* Loading */
+.loading-section {
+  display: none;
+  text-align: center;
+  padding: 48px 24px;
+}
+.loading-section.visible {
+  display: block;
+}
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+.loading-sub {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+/* Error */
+.error-section {
+  display: none;
+  padding: 20px 24px;
+  background: #ffebee;
+  border-radius: var(--radius);
+  color: #c62828;
+  margin-bottom: 24px;
+}
+.error-section.visible {
+  display: block;
+}
+
+/* Results */
+.results-section {
+  display: none;
+}
+.results-section.visible {
+  display: block;
+}
+.results-header {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.results-header h2 {
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+.results-header .location-name {
+  color: var(--accent);
+  font-weight: 700;
+}
+.results-header .summary {
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+.results-header .summary strong {
+  color: var(--accent);
+}
+
+/* Month groups */
+.month-group {
+  margin-bottom: 20px;
+}
+.month-header {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 8px 0 8px 8px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.month-header .count-badge {
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.day-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: box-shadow var(--transition), transform var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.day-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+.day-number {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 42px;
+  text-align: center;
+  line-height: 1;
+}
+.day-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.day-info .month-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+.weekday-row {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+.weekday-item {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.weekday-label {
+  font-size: 0.65rem;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.weekday-name {
+  font-weight: 600;
+}
+.weekday-name.weekend {
+  color: var(--warning);
+}
+.weekday-name.na {
+  color: #ccc;
+  font-style: italic;
+}
+
+/* Consecutive rain-free years badge */
+.consecutive-badge {
+  align-self: flex-start;
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  margin-top: 4px;
+}
+.consecutive-badge.yr5 {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.consecutive-badge.yr4 {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+/* No results */
+.no-results {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.no-results .icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+.no-results h3 {
+  font-size: 1.15rem;
+  margin-bottom: 8px;
+}
+.no-results p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Footer note */
+.footnote {
+  text-align: center;
+  padding: 32px 0 16px;
+  font-size: 0.75rem;
+  color: #bbb;
+}
+.footnote a {
+  color: #aaa;
+  text-decoration: none;
+}
+.footnote a:hover {
+  text-decoration: underline;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  header {
+    padding: 32px 0 20px;
+  }
+  header h1 {
+    font-size: 1.5rem;
+  }
+  .day-grid {
+    grid-template-columns: 1fr;
+  }
+  .day-card {
+    padding: 12px 14px;
+  }
+  .container {
+    padding: 8px 12px 32px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>&#x2614; Rain-Free Day Finder</h1>
+    <p>Find days with little or no precipitation in the past 5&nbsp;years</p>
+  </header>
+
+  <div class="search-section">
+    <div class="search-wrapper">
+      <input
+        type="text"
+        class="search-input"
+        id="searchInput"
+        placeholder="Search for a city or location..."
+        autocomplete="off"
+        spellcheck="false"
+      >
+      <button class="search-clear" id="searchClear" aria-label="Clear search">&times;</button>
+      <div class="autocomplete" id="autocomplete"></div>
+    </div>
+  </div>
+
+  <div class="loading-section" id="loadingSection">
+    <div class="spinner"></div>
+    <p class="loading-text">Fetching 5 years of historical weather data&hellip;</p>
+    <p class="loading-sub" id="loadingSub">This may take a few seconds</p>
+  </div>
+
+  <div class="error-section" id="errorSection"></div>
+
+  <div class="results-section" id="resultsSection">
+    <div class="results-header" id="resultsHeader"></div>
+    <div id="monthGroups"></div>
+    <div class="no-results" id="noResults" style="display:none">
+      <div class="icon">&#x2600;</div>
+      <h3>No rain-free days found</h3>
+      <p>No days found that were rain-free for 4 or more years at this location. Try a drier climate.</p>
+    </div>
+  </div>
+
+  <p class="footnote">
+    Weather data powered by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>
+    &middot; Based on ERA5 reanalysis
+  </p>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── DOM refs ──────────────────────────────────────────────
+  const searchInput    = document.getElementById('searchInput');
+  const searchClear    = document.getElementById('searchClear');
+  const autocompleteEl = document.getElementById('autocomplete');
+  const loadingSection = document.getElementById('loadingSection');
+  const loadingSub     = document.getElementById('loadingSub');
+  const errorSection   = document.getElementById('errorSection');
+  const resultsSection = document.getElementById('resultsSection');
+  const resultsHeader  = document.getElementById('resultsHeader');
+  const monthGroups    = document.getElementById('monthGroups');
+  const noResults      = document.getElementById('noResults');
+
+  // ── Constants ─────────────────────────────────────────────
+  const WEEKDAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS    = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const CURRENT_YEAR = new Date().getFullYear();
+  const NEXT_YEAR    = CURRENT_YEAR + 1;
+  const HISTORY_YEARS = 5;
+  const FIRST_YEAR = CURRENT_YEAR - HISTORY_YEARS;
+  const LAST_YEAR  = CURRENT_YEAR - 1;
+
+  let activeIndex = -1;
+  let searchResults = [];
+  let selectedLocation = null;
+
+  // ── Helpers ───────────────────────────────────────────────
+
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+
+  function showError(msg) {
+    errorSection.textContent = msg;
+    errorSection.classList.add('visible');
+    resultsSection.classList.remove('visible');
+  }
+
+  function hideError() {
+    errorSection.classList.remove('visible');
+  }
+
+  // ── Clear search ─────────────────────────────────────────
+  searchInput.addEventListener('input', function() {
+    searchClear.classList.toggle('visible', this.value.length > 0);
+  });
+  searchClear.addEventListener('click', function() {
+    searchInput.value = '';
+    searchClear.classList.remove('visible');
+    autocompleteEl.classList.remove('open');
+    searchResults = [];
+    activeIndex = -1;
+    searchInput.focus();
+  });
+
+  // ── Autocomplete ─────────────────────────────────────────
+  async function fetchLocations(query) {
+    if (query.length < 2) {
+      autocompleteEl.classList.remove('open');
+      searchResults = [];
+      activeIndex = -1;
+      return;
+    }
+    try {
+      const url = 'https://geocoding-api.open-meteo.com/v1/search?name='
+        + encodeURIComponent(query) + '&count=6&language=en&format=json';
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('Geocoding API error');
+      const data = await resp.json();
+      searchResults = data.results || [];
+      activeIndex = -1;
+      renderAutocomplete();
+    } catch (e) {
+      searchResults = [];
+      autocompleteEl.classList.remove('open');
+    }
+  }
+
+  function renderAutocomplete() {
+    autocompleteEl.innerHTML = '';
+    if (searchResults.length === 0) {
+      autocompleteEl.classList.remove('open');
+      return;
+    }
+    autocompleteEl.classList.add('open');
+    searchResults.forEach(function(loc, i) {
+      const item = document.createElement('div');
+      item.className = 'autocomplete-item';
+      if (i === activeIndex) item.classList.add('active');
+      const adminStr = [loc.admin1, loc.country].filter(Boolean).join(', ');
+
+      item.innerHTML =
+        '<span class="city-name">' + escapeHtml(loc.name) + '</span>' +
+        (adminStr ? '<span class="city-detail">' + escapeHtml(adminStr) + '</span>' : '') +
+        '<span class="coords">' + loc.latitude.toFixed(4) + ', ' + loc.longitude.toFixed(4) + '</span>';
+
+      item.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        selectLocation(loc);
+      });
+      item.addEventListener('mouseenter', function() {
+        setActive(i);
+      });
+      autocompleteEl.appendChild(item);
+    });
+  }
+
+  function setActive(index) {
+    activeIndex = index;
+    var items = autocompleteEl.querySelectorAll('.autocomplete-item');
+    items.forEach(function(el, i) { el.classList.toggle('active', i === index); });
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  const debouncedSearch = debounce(function(query) {
+    fetchLocations(query);
+  }, 250);
+
+  searchInput.addEventListener('input', function() {
+    hideError();
+    const query = this.value.trim();
+    debouncedSearch(query);
+  });
+
+  // Keyboard nav for autocomplete
+  searchInput.addEventListener('keydown', function(e) {
+    if (!autocompleteEl.classList.contains('open')) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, searchResults.length - 1);
+      setActive(activeIndex);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, -1);
+      setActive(activeIndex);
+    } else if (e.key === 'Enter') {
+      if (activeIndex >= 0 && activeIndex < searchResults.length) {
+        e.preventDefault();
+        selectLocation(searchResults[activeIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      autocompleteEl.classList.remove('open');
+      activeIndex = -1;
+    }
+  });
+
+  // Close autocomplete on outside click
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !autocompleteEl.contains(e.target)) {
+      autocompleteEl.classList.remove('open');
+      activeIndex = -1;
+    }
+  });
+
+  // ── Select location & fetch data ─────────────────────────
+  function selectLocation(loc) {
+    selectedLocation = loc;
+    searchInput.value = loc.name + ', ' + (loc.admin1 || '') + (loc.country ? ', ' + loc.country : '');
+    searchClear.classList.add('visible');
+    autocompleteEl.classList.remove('open');
+    searchResults = [];
+    activeIndex = -1;
+
+    // Reset UI
+    hideError();
+    resultsSection.classList.remove('visible');
+    noResults.style.display = 'none';
+    monthGroups.innerHTML = '';
+
+    // Show loading
+    loadingSection.classList.add('visible');
+    loadingSub.textContent = 'Fetching ' + FIRST_YEAR + '\u2013' + LAST_YEAR + ' precipitation data\u2026';
+
+    fetchAndAnalyze(loc.latitude, loc.longitude, loc.name);
+  }
+
+  // ── Fetch & Analyze ──────────────────────────────────────
+  async function fetchAndAnalyze(lat, lon, locName) {
+    const controller = new AbortController();
+    const timeout = setTimeout(function() { controller.abort(); }, 45000);
+
+    try {
+      const startDate = FIRST_YEAR + '-01-01';
+      const endDate   = LAST_YEAR + '-12-31';
+
+      const url = 'https://archive-api.open-meteo.com/v1/archive'
+        + '?latitude=' + lat
+        + '&longitude=' + lon
+        + '&start_date=' + startDate
+        + '&end_date=' + endDate
+        + '&daily=precipitation_sum'
+        + '&timezone=auto';
+
+      const resp = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!resp.ok) throw new Error('Weather API returned status ' + resp.status);
+
+      const data = await resp.json();
+      if (!data.daily || !data.daily.time || data.daily.time.length === 0) {
+        throw new Error('No historical weather data available for this location.');
+      }
+
+      loadingSub.textContent = 'Analyzing ' + HISTORY_YEARS + ' years of precipitation data\u2026';
+
+      // Process data – runs async via setTimeout to let loading subtext render
+      await new Promise(function(r) { setTimeout(r, 80); });
+
+      const safeDays = processData(data.daily);
+
+      loadingSection.classList.remove('visible');
+
+      if (safeDays.length === 0) {
+        resultsSection.classList.add('visible');
+        resultsHeader.innerHTML =
+          '<h2>Results for <span class="location-name">' + escapeHtml(locName) + '</span></h2>' +
+          '<p class="summary">Analyzed ' + HISTORY_YEARS + ' years of data (' + FIRST_YEAR + '\u2013' + LAST_YEAR + ')</p>';
+        noResults.style.display = 'block';
+        monthGroups.innerHTML = '';
+      } else {
+        renderResults(locName, safeDays);
+      }
+    } catch (e) {
+      clearTimeout(timeout);
+      loadingSection.classList.remove('visible');
+      if (e.name === 'AbortError') {
+        showError('Request timed out after 45 seconds. The weather service may be busy. Please try again.');
+      } else {
+        showError(e.message || 'Failed to fetch weather data. Please try again.');
+      }
+      console.error(e);
+    }
+  }
+
+  function processData(daily) {
+    // Build map: "MM-DD" -> { count, rainCount, missingCount }
+    var dayStats = {};
+
+    for (var i = 0; i < daily.time.length; i++) {
+      var dateStr = daily.time[i];
+      var mmdd = dateStr.slice(5); // "MM-DD"
+      var precip = daily.precipitation_sum[i];
+
+      if (!dayStats[mmdd]) {
+        dayStats[mmdd] = { count: 0, rainCount: 0 };
+      }
+      dayStats[mmdd].count++;
+
+      if (precip !== null && precip !== undefined && precip > 0) {
+        dayStats[mmdd].rainCount++;
+      }
+    }
+
+    var safeDays = [];
+
+    for (var key in dayStats) {
+      var stats = dayStats[key];
+      var parts = key.split('-');
+      var month = parseInt(parts[0], 10);
+      var day   = parseInt(parts[1], 10);
+
+      // Skip leap days
+      if (key === '02-29') continue;
+
+      var minRequired = Math.floor(HISTORY_YEARS * 0.75); // 4 out of 5
+
+      // Skip if not enough data
+      if (stats.count < minRequired) continue;
+
+      // Allow up to 1 rain event in 5 years (rain-free for 4+ years)
+      if (stats.rainCount > 1) continue;
+
+      var rainFreeYears = HISTORY_YEARS - stats.rainCount;
+
+      // Get weekdays for current & next year
+      var weekdayCurr = null;
+      var weekdayNext = null;
+
+      var dCurr = new Date(CURRENT_YEAR, month - 1, day);
+      if (dCurr.getMonth() === month - 1) {
+        weekdayCurr = WEEKDAYS[dCurr.getDay()];
+      }
+      var dNext = new Date(NEXT_YEAR, month - 1, day);
+      if (dNext.getMonth() === month - 1) {
+        weekdayNext = WEEKDAYS[dNext.getDay()];
+      }
+
+      safeDays.push({
+        month: month,
+        day: day,
+        mmdd: key,
+        weekdayCurr: weekdayCurr,
+        weekdayNext: weekdayNext,
+        dataCount: stats.count,
+        rainFreeYears: rainFreeYears
+      });
+    }
+
+    // Sort by month, then day
+    safeDays.sort(function(a, b) {
+      return a.month - b.month || a.day - b.day;
+    });
+
+    return safeDays;
+  }
+
+  // ── Render results ───────────────────────────────────────
+  function renderResults(locName, safeDays) {
+    resultsSection.classList.add('visible');
+    noResults.style.display = 'none';
+
+    var fullCount = safeDays.filter(function(d) { return d.rainFreeYears === 5; }).length;
+    var partialCount = safeDays.filter(function(d) { return d.rainFreeYears === 4; }).length;
+
+    resultsHeader.innerHTML =
+      '<h2>Results for <span class="location-name">' + escapeHtml(locName) + '</span></h2>' +
+      '<p class="summary"><strong>' + safeDays.length + '</strong> rain-free ' +
+      (safeDays.length === 1 ? 'day' : 'days') + ' found in ' + HISTORY_YEARS + ' years of data ' +
+      '(' + FIRST_YEAR + '\u2013' + LAST_YEAR + ')</p>' +
+      (partialCount > 0
+        ? '<p class="summary" style="font-size:0.9rem;margin-top:2px;">' +
+          '<span class="consecutive-badge yr5" style="margin-right:4px;">5 years</span> ' + fullCount + ' ' + (fullCount === 1 ? 'day' : 'days') +
+          ' &middot; ' +
+          '<span class="consecutive-badge yr4" style="margin-right:4px;">4 years</span> ' + partialCount + ' ' + (partialCount === 1 ? 'day' : 'days') +
+          '</p>'
+        : '');
+
+    // Group by month
+    var grouped = {};
+    safeDays.forEach(function(d) {
+      if (!grouped[d.month]) grouped[d.month] = [];
+      grouped[d.month].push(d);
+    });
+
+    var html = '';
+    for (var m = 1; m <= 12; m++) {
+      if (!grouped[m]) continue;
+      var days = grouped[m];
+      html += '<div class="month-group">';
+      html += '<div class="month-header">' + MONTHS[m - 1];
+      html += '<span class="count-badge">' + days.length + ' ' + (days.length === 1 ? 'day' : 'days') + '</span>';
+      html += '</div><div class="day-grid">';
+
+      days.forEach(function(d) {
+        html += '<div class="day-card">';
+        html += '<div class="day-number">' + d.day + '</div>';
+        html += '<div class="day-info">';
+        // html += '<span class="month-label">' + MONTHS[d.month - 1].slice(0, 3) + '</span>';
+        html += '<div class="weekday-row">';
+
+        html += '<div class="weekday-item">';
+        html += '<span class="weekday-label">' + CURRENT_YEAR + '</span>';
+        if (d.weekdayCurr) {
+          var cls = (d.weekdayCurr === 'Saturday' || d.weekdayCurr === 'Sunday') ? 'weekend' : '';
+          html += '<span class="weekday-name ' + cls + '">' + d.weekdayCurr + '</span>';
+        } else {
+          html += '<span class="weekday-name na">N/A</span>';
+        }
+        html += '</div>';
+
+        html += '<div class="weekday-item">';
+        html += '<span class="weekday-label">' + NEXT_YEAR + '</span>';
+        if (d.weekdayNext) {
+          var cls2 = (d.weekdayNext === 'Saturday' || d.weekdayNext === 'Sunday') ? 'weekend' : '';
+          html += '<span class="weekday-name ' + cls2 + '">' + d.weekdayNext + '</span>';
+        } else {
+          html += '<span class="weekday-name na">N/A</span>';
+        }
+        html += '</div>';
+
+        html += '</div>';
+        html += '<span class="consecutive-badge yr' + d.rainFreeYears + '">' + d.rainFreeYears + ' years no rain</span>';
+        html += '</div>';
+        html += '</div>';
+      });
+
+      html += '</div></div>';
+    }
+
+    monthGroups.innerHTML = html;
+    // Scroll to results
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+})();
+</script>
+</body>
+</html>
