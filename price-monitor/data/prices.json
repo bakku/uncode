@@ -49,13 +49,13 @@
         "name": "Lammkeule",
         "price": 63.29
       },
-      "2250": {
-        "name": "Lammkoteletts, Chobs aus dem Rücken",
-        "price": 23.1
-      },
       "5506": {
         "name": "Lammribs",
         "price": 24.84
+      },
+      "2250": {
+        "name": "Lammkoteletts, Chobs aus dem Rücken",
+        "price": 23.1
       },
       "5500": {
         "name": "Lammschulter mit Knochen halb",
@@ -86,6 +86,6 @@
         "price": 43.69
       }
     },
-    "last_checked": "2026-05-02T09:11:24.855564+00:00"
+    "last_checked": "2026-05-03T09:24:17.618305+00:00"
   }
 }
