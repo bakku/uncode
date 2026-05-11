@@ -69,13 +69,13 @@
         "name": "Lammrollbraten aus der Schulter",
         "price": 44.76
       },
-      "181": {
-        "name": "Lammrücken/ Kotelett im Ganzen",
-        "price": 43.8
-      },
       "5509": {
         "name": "Lammschäufele",
         "price": 34.5
+      },
+      "181": {
+        "name": "Lammrücken/ Kotelett im Ganzen",
+        "price": 43.8
       },
       "2249": {
         "name": "Lammkoteletts, Chobs aus dem Hals",
@@ -86,6 +86,6 @@
         "price": 43.69
       }
     },
-    "last_checked": "2026-05-10T09:40:54.306248+00:00"
+    "last_checked": "2026-05-11T11:28:37.544642+00:00"
   }
 }
