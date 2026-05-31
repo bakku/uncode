@@ -57,13 +57,13 @@
         "name": "Lammkoteletts, Chobs aus dem Rücken",
         "price": 23.1
       },
-      "5500": {
-        "name": "Lammschulter mit Knochen halb",
-        "price": 41.4
-      },
       "177": {
         "name": "Lammschulter mit Knochen",
         "price": 68.25
+      },
+      "5500": {
+        "name": "Lammschulter mit Knochen halb",
+        "price": 41.4
       },
       "5508": {
         "name": "Lammrollbraten aus der Schulter",
@@ -86,6 +86,6 @@
         "price": 43.69
       }
     },
-    "last_checked": "2026-05-30T10:03:47.262792+00:00"
+    "last_checked": "2026-05-31T10:18:43.174555+00:00"
   }
 }
